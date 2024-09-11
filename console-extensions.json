@@ -38,6 +38,13 @@
     }
   },
   {
+     "type": "console.page/route",
+     "properties": {
+       "path": "/kuadrant/authpolicy/new",
+       "component": { "$codeRef": "KuadrantAuthPolicyCreatePage" }
+     }
+   },
+  {
     "type": "console.navigation/section",
     "properties": {
       "id": "kuadrant-section-admin",
@@ -113,6 +120,17 @@
       "perspective": "dev",
       "section": "kuadrant-section-dev",
       "badge": "dev"
+    }
+  },
+  {
+    "type": "console.resource/create",
+    "properties": {
+      "model": {
+        "group": "kuadrant.io",
+        "version": "v1beta2",
+        "kind": "AuthPolicy"
+      },
+      "component": { "$codeRef": "KuadrantAuthPolicyCreatePage" }
     }
   }
 ]
