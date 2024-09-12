@@ -55,3 +55,15 @@
 .kuadrant-dashboard-learning, .kuadrant-dashboard-feature-highlights, .kuadrant-dashboard-enhance  {
   margin-bottom: 0.5em;
 }
+
+.kuadrant-dashboard-resource-link {
+  text-decoration: none;
+  color: black;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.kuadrant-dashboard-resource-link:hover {
+  text-decoration: underline;
+  color: #0066cc;
+}
