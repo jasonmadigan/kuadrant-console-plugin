@@ -39,3 +39,19 @@
 .kuadrant-editor-toggle .pf-v5-c-radio {
   padding: 0 0 0 1rem;
 }
+
+.kuadrant-dashboard-learning {
+  color: #1F0066;
+}
+
+.kuadrant-dashboard-feature-highlights {
+  color: #0066CC;
+}
+
+.kuadrant-dashboard-enhance {
+  color: #D38940;
+}
+
+.kuadrant-dashboard-learning, .kuadrant-dashboard-feature-highlights, .kuadrant-dashboard-enhance  {
+  margin-bottom: 0.5em;
+}
