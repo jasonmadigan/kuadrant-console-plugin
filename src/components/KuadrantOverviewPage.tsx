@@ -14,7 +14,7 @@ import {
 import { Divider, Flex, FlexItem } from '@patternfly/react-core';
 import { useActiveNamespace } from '@openshift-console/dynamic-plugin-sdk';
 import './kuadrant.css';
-import { GlobeIcon, ReplicatorIcon, OptimizeIcon, ArrowRightIcon } from '@patternfly/react-icons';
+import { GlobeIcon, ReplicatorIcon, OptimizeIcon, ArrowRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 const KuadrantOverviewPage: React.FC = () => {
   const { t } = useTranslation('plugin__console-plugin-template');
@@ -61,6 +61,20 @@ const KuadrantOverviewPage: React.FC = () => {
                     <OptimizeIcon /> Feature Highlights
                   </Title>
                   <p>Read about the latest information and key features in the {t('Kuadrant')} highlights.</p>
+                  <br/>
+                  <Text target='_blank' component="a" href="#" className="kuadrant-dashboard-resource-link">
+                    {t('Kuadrant')} highlights <ExternalLinkAltIcon />
+                  </Text>
+                  <br/>
+                  {/* TODO: portal link */}
+                  <Text target='_blank' component="a" href="https://access.redhat.com/articles/7065949" className="kuadrant-dashboard-resource-link">
+                    {t('Kuadrant')} Release Notes 
+                    {/* TODO: class for these */}
+                    <span style={{ fontSize: '0.8rem', color: 'gray', marginLeft: '8px', marginRight: '8px' }}>
+                      8 min read
+                    </span> 
+                    <ExternalLinkAltIcon />
+                  </Text>
                 </FlexItem>
                 <Divider orientation={{ default: 'vertical' }} />
                 <FlexItem flex={{ default: 'flex_1' }}>
