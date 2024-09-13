@@ -157,13 +157,13 @@ const KuadrantOverviewPage: React.FC = () => {
             <FlexItem flex={{ default: 'flex_1' }}>
               <Card >
                 <CardTitle><Title headingLevel="h2">Policies</Title></CardTitle>
-                <CardBody>
-                <AllPoliciesListPage 
-                  activeNamespace='#ALL_NS#' 
-                  columns={columns} 
-                  showAlertGroup={false} 
-                  paginationLimit={5} 
-                />
+                <CardBody className="pf-u-p-0">
+                  <AllPoliciesListPage 
+                    activeNamespace='#ALL_NS#' 
+                    columns={columns} 
+                    showAlertGroup={false} 
+                    paginationLimit={5} 
+                  />
                 </CardBody>
               </Card>
             </FlexItem>
