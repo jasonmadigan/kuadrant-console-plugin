@@ -158,7 +158,12 @@ const KuadrantOverviewPage: React.FC = () => {
               <Card >
                 <CardTitle><Title headingLevel="h2">Policies</Title></CardTitle>
                 <CardBody>
-                <AllPoliciesListPage activeNamespace='#ALL_NS#' columns={columns} />
+                <AllPoliciesListPage 
+                  activeNamespace='#ALL_NS#' 
+                  columns={columns} 
+                  showAlertGroup={false} 
+                  paginationLimit={5} 
+                />
                 </CardBody>
               </Card>
             </FlexItem>

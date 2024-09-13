@@ -12,6 +12,7 @@ import {
   Title,
   Button,
   ButtonVariant,
+  Pagination,
 } from '@patternfly/react-core';
 import { sortable } from '@patternfly/react-table';
 import { EllipsisVIcon } from '@patternfly/react-icons';
@@ -39,7 +40,6 @@ import {
 import './kuadrant.css';
 import getModelFromResource from '../utils/getModelFromResource';
 
-
 interface Resource {
   name: string;
   gvk: {
@@ -60,7 +60,7 @@ const statusConditionsAsString = (obj: any) => {
     return '';
   }
   return obj.status.conditions
-    .map(condition => `${condition.type}=${condition.status}`)
+    .map((condition: any) => `${condition.type}=${condition.status}`)
     .join(',');
 };
 
@@ -76,7 +76,8 @@ type AllPoliciesTableProps = {
   unfilteredData: K8sResourceCommon[];
   loaded: boolean;
   loadError: any;
-  columns?: TableColumn<K8sResourceCommon>[]; // Added columns prop
+  columns?: TableColumn<K8sResourceCommon>[];
+  paginationLimit?: number;
 };
 
 type DropdownWithKebabProps = {
@@ -91,7 +92,14 @@ type PoliciesTableProps = {
   resource: Resource;
 };
 
-const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredData, loaded, loadError, columns }) => {
+const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({
+  data,
+  unfilteredData,
+  loaded,
+  loadError,
+  columns,
+  paginationLimit,
+}) => {
   const { t } = useTranslation();
 
   const defaultColumns: TableColumn<K8sResourceCommon>[] = [
@@ -124,13 +132,37 @@ const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredDat
       transforms: [sortable],
     },
     {
-      title: '',  // No title for the kebab menu column
+      title: '', // No title for the kebab menu column
       id: 'dropdown-with-kebab',
       props: { className: 'pf-v5-c-table__action' },
     },
   ];
 
   const usedColumns = columns || defaultColumns;
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [perPage, setPerPage] = React.useState<number>(paginationLimit || 10);
+
+  // pagination events
+  const onSetPage = (
+    _event: React.MouseEvent | React.KeyboardEvent | MouseEvent,
+    pageNumber: number
+  ) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const onPerPageSelect = (
+    _event: React.MouseEvent | React.KeyboardEvent | MouseEvent,
+    perPageNumber: number
+  ) => {
+    setPerPage(perPageNumber);
+    setCurrentPage(1); // Reset to first page when perPage changes
+  };
+
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const paginatedData = data.slice(startIndex, endIndex);
 
   const AllPolicyRow: React.FC<RowProps<K8sResourceCommon>> = ({ obj, activeColumnIDs }) => {
     const [group, version] = obj.apiVersion.includes('/') ? obj.apiVersion.split('/') : ['', obj.apiVersion];
@@ -157,7 +189,10 @@ const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredDat
             case 'namespace':
               return (
                 <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
-                  <ResourceLink groupVersionKind={{ version: 'v1', kind: 'Namespace' }} name={obj.metadata.namespace} />
+                  <ResourceLink
+                    groupVersionKind={{ version: 'v1', kind: 'Namespace' }}
+                    name={obj.metadata.namespace}
+                  />
                 </TableData>
               );
             case 'Status':
@@ -174,7 +209,12 @@ const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredDat
               );
             case 'dropdown-with-kebab':
               return (
-                <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs} className="pf-v5-c-table__action">
+                <TableData
+                  key={column.id}
+                  id={column.id}
+                  activeColumnIDs={activeColumnIDs}
+                  className="pf-v5-c-table__action"
+                >
                   <DropdownWithKebab obj={obj} />
                 </TableData>
               );
@@ -187,14 +227,29 @@ const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredDat
   };
 
   return (
-    <VirtualizedTable<K8sResourceCommon>
-      data={data}
-      unfilteredData={unfilteredData}
-      loaded={loaded}
-      loadError={loadError}
-      columns={usedColumns}
-      Row={AllPolicyRow}
-    />
+    <>
+      <VirtualizedTable<K8sResourceCommon>
+        data={paginatedData}
+        unfilteredData={unfilteredData}
+        loaded={loaded}
+        loadError={loadError}
+        columns={usedColumns}
+        Row={AllPolicyRow}
+      />
+      <Pagination
+        itemCount={data.length}
+        perPage={perPage}
+        page={currentPage}
+        onSetPage={onSetPage}
+        onPerPageSelect={onPerPageSelect}
+        variant="bottom"
+        perPageOptions={[
+          { title: '5', value: 5 },
+          { title: '10', value: 10 },
+          { title: '20', value: 20 },
+        ]}
+      />
+    </>
   );
 };
 
@@ -313,7 +368,7 @@ const PoliciesTable: React.FC<PoliciesTableProps> = ({ data, unfilteredData, loa
       transforms: [sortable],
     },
     {
-      title: '',  // No title for the kebab menu column
+      title: '', // No title for the kebab menu column
       id: 'dropdown-with-kebab',
       props: { className: 'pf-v5-c-table__action' },
     },
@@ -323,7 +378,11 @@ const PoliciesTable: React.FC<PoliciesTableProps> = ({ data, unfilteredData, loa
     return (
       <>
         <TableData id={columns[0].id} activeColumnIDs={activeColumnIDs}>
-          <ResourceLink groupVersionKind={resource.gvk} name={obj.metadata.name} namespace={obj.metadata.namespace} />
+          <ResourceLink
+            groupVersionKind={resource.gvk}
+            name={obj.metadata.name}
+            namespace={obj.metadata.namespace}
+          />
         </TableData>
         <TableData id={columns[1].id} activeColumnIDs={activeColumnIDs}>
           <ResourceLink groupVersionKind={{ version: 'v1', kind: 'Namespace' }} name={obj.metadata.namespace} />
@@ -353,7 +412,12 @@ const PoliciesTable: React.FC<PoliciesTableProps> = ({ data, unfilteredData, loa
   );
 };
 
-export const AllPoliciesListPage: React.FC<{ activeNamespace: string; columns?: TableColumn<K8sResourceCommon>[] }> = ({ activeNamespace, columns }) => {
+export const AllPoliciesListPage: React.FC<{
+  activeNamespace: string;
+  columns?: TableColumn<K8sResourceCommon>[];
+  showAlertGroup?: boolean;
+  paginationLimit?: number;
+}> = ({ activeNamespace, columns, showAlertGroup = true, paginationLimit }) => {
   const watchedResources = resources.map((resource) => {
     const { group, version, kind } = resource.gvk;
     return useK8sWatchResource<ExtendedK8sResourceCommon[]>({
@@ -372,17 +436,27 @@ export const AllPoliciesListPage: React.FC<{ activeNamespace: string; columns?: 
   return (
     <>
       <ListPageBody>
-        <AlertGroup className="kuadrant-alert-group">
-          <Alert title="Info about this page" variant="info" isInline>
-            ...
-          </Alert>
-        </AlertGroup>
+        {showAlertGroup && (
+          <AlertGroup className="kuadrant-alert-group">
+            <Alert title="Info about this page" variant="info" isInline>
+              ...
+            </Alert>
+          </AlertGroup>
+        )}
         <ListPageFilter data={data} loaded={loaded} onFilterChange={onFilterChange} />
-        <AllPoliciesTable data={filteredData} unfilteredData={data} loaded={loaded} loadError={loadError} columns={columns} />
+        <AllPoliciesTable
+          data={filteredData}
+          unfilteredData={data}
+          loaded={loaded}
+          loadError={loadError}
+          columns={columns}
+          paginationLimit={paginationLimit}
+        />
       </ListPageBody>
     </>
   );
 };
+
 
 const PoliciesListPage: React.FC<{ resource: Resource; activeNamespace: string }> = ({ resource, activeNamespace }) => {
   const { group, version, kind } = resource.gvk;
