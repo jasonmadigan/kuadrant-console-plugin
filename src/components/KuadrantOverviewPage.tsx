@@ -90,7 +90,7 @@ const KuadrantOverviewPage: React.FC = () => {
                       <Text target='_blank' component="a" href={EXTERNAL_LINKS.releaseNotes} className="kuadrant-dashboard-resource-link">
                         {t('Kuadrant')} Release Notes
                         {/* TODO: class for these */}
-                        <span style={{ fontSize: '0.8rem', color: 'gray', marginLeft: '8px', marginRight: '8px' }}>
+                        <span className="kuadrant-reading-time">
                           6 min read
                         </span>
                         <ExternalLinkAltIcon />
@@ -109,6 +109,23 @@ const KuadrantOverviewPage: React.FC = () => {
                     <ReplicatorIcon /> Enhance Your Work
                   </Title>
                   <p>Ease operational complexity with API management and App Connectivity by using additional Operators and tools.</p>
+                  <Stack hasGutter className="pf-u-mt-md">
+                    <StackItem>
+                      <Text component="a" href={INTERNAL_LINKS.apiDesignerOperator(activeNamespace)} className="kuadrant-dashboard-resource-link">
+                        API Designer Operator <ArrowRightIcon />
+                      </Text>
+                    </StackItem>
+                    <StackItem>
+                      <Text component="a" href={INTERNAL_LINKS.observabilitySetup} className="kuadrant-dashboard-resource-link">
+                        Observability for {t('Kuadrant')} <ArrowRightIcon />
+                      </Text>
+                    </StackItem>
+                    <StackItem>
+                      <Text component="a" href={INTERNAL_LINKS.certManagerOperator(activeNamespace)} className="kuadrant-dashboard-resource-link">
+                        cert-manager Operator <ArrowRightIcon />
+                      </Text>
+                    </StackItem>
+                  </Stack>
                 </FlexItem>
               </Flex>
             </CardBody>
