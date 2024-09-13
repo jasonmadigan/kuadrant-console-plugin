@@ -18,6 +18,8 @@ import { useActiveNamespace } from '@openshift-console/dynamic-plugin-sdk';
 import './kuadrant.css';
 import { GlobeIcon, ReplicatorIcon, OptimizeIcon, ArrowRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 
+import { AllPoliciesListPage } from './KuadrantPoliciesPage';
+
 import { INTERNAL_LINKS, EXTERNAL_LINKS } from '../constants/links';
 
 const KuadrantOverviewPage: React.FC = () => {
@@ -130,6 +132,46 @@ const KuadrantOverviewPage: React.FC = () => {
               </Flex>
             </CardBody>
           </Card>
+
+
+          <Flex className="pf-u-mt-xl">
+            <FlexItem flex={{ default: 'flex_1' }}>
+              <Card >
+                <CardTitle><Title headingLevel="h2">Policies</Title></CardTitle>
+                <CardBody>
+                  <AllPoliciesListPage activeNamespace='#ALL_NS#' />
+                </CardBody>
+              </Card>
+            </FlexItem>
+            <FlexItem flex={{ default: 'flex_1'}}>
+              <Card >
+                <CardTitle><Title headingLevel="h2">Alerts</Title></CardTitle>
+                <CardBody>
+                  me alerts
+                </CardBody>
+              </Card>
+            </FlexItem>
+          </Flex>
+
+          <Flex className="pf-u-mt-xl">
+            <FlexItem flex={{ default: 'flex_1' }}>
+              <Card >
+                <CardTitle><Title headingLevel="h2">Gateways</Title></CardTitle>
+                <CardBody>
+                  me gateways
+                </CardBody>
+              </Card>
+            </FlexItem>
+            <FlexItem flex={{ default: 'flex_1'}}>
+              <Card >
+                <CardTitle><Title headingLevel="h2">APIs / HTTPRoutes</Title></CardTitle>
+                <CardBody>
+                  me APIs
+                </CardBody>
+              </Card>
+            </FlexItem>
+          </Flex>
+
         </PageSection>
       </Page>
     </>

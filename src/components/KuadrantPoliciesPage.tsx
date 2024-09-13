@@ -320,7 +320,7 @@ const PoliciesTable: React.FC<PoliciesTableProps> = ({ data, unfilteredData, loa
   );
 };
 
-const AllPoliciesListPage: React.FC<{ activeNamespace: string }> = ({ activeNamespace }) => {
+export const AllPoliciesListPage: React.FC<{ activeNamespace: string }> = ({ activeNamespace }) => {
   const watchedResources = resources.map((resource) => {
     const { group, version, kind } = resource.gvk;
     return useK8sWatchResource<ExtendedK8sResourceCommon[]>({
