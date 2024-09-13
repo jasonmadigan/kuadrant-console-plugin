@@ -9,12 +9,16 @@ import {
   Card,
   CardTitle,
   CardBody,
-  Text
+  Text,
+  Stack,
+  StackItem
 } from '@patternfly/react-core';
 import { Divider, Flex, FlexItem } from '@patternfly/react-core';
 import { useActiveNamespace } from '@openshift-console/dynamic-plugin-sdk';
 import './kuadrant.css';
 import { GlobeIcon, ReplicatorIcon, OptimizeIcon, ArrowRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
+
+import { INTERNAL_LINKS, EXTERNAL_LINKS } from '../constants/links';
 
 const KuadrantOverviewPage: React.FC = () => {
   const { t } = useTranslation('plugin__console-plugin-template');
@@ -46,14 +50,28 @@ const KuadrantOverviewPage: React.FC = () => {
                     <GlobeIcon /> Learning Resources
                   </Title>
                   <p>Learn how to create, import and use {t('Kuadrant')} policies on OpenShift with step-by-step instructions and tasks.</p>
-                  <br />
-                  <Text component="a" href="/kuadrant/all-namespaces/policies" className="kuadrant-dashboard-resource-link">
-                    Create Policies in {t('Kuadrant')} <ArrowRightIcon />
-                  </Text>
-                  <br />
-                  <Text component="a" href={`/k8s/ns/${activeNamespace}/gateway.networking.k8s.io~v1~Gateway/~new`} className="kuadrant-dashboard-resource-link"                   >
-                    Add a new Gateway <ArrowRightIcon />
-                  </Text>
+                  <Stack hasGutter className="pf-u-mt-md">
+                    <StackItem>
+                      <Text component="a" href={INTERNAL_LINKS.createPolicies} className="kuadrant-dashboard-resource-link">
+                        Create Policies in {t('Kuadrant')} <ArrowRightIcon />
+                      </Text>
+                    </StackItem>
+                    <StackItem>
+                      <Text component="a" href={INTERNAL_LINKS.addNewGateway(activeNamespace)} className="kuadrant-dashboard-resource-link">
+                        Add a new Gateway <ArrowRightIcon />
+                      </Text>
+                    </StackItem>
+                    <StackItem>
+                      <Text component="a" href={EXTERNAL_LINKS.documentation} className="pf-u-display-block">
+                        View Documentation
+                      </Text>
+                    </StackItem>
+                    <StackItem>
+                      <Text component="a" href={EXTERNAL_LINKS.quickStarts} className="pf-u-display-block">
+                        View all quick starts
+                      </Text>
+                    </StackItem>
+                  </Stack>
                 </FlexItem>
                 <Divider orientation={{ default: 'vertical' }} />
                 <FlexItem flex={{ default: 'flex_1' }}>
@@ -61,20 +79,29 @@ const KuadrantOverviewPage: React.FC = () => {
                     <OptimizeIcon /> Feature Highlights
                   </Title>
                   <p>Read about the latest information and key features in the {t('Kuadrant')} highlights.</p>
-                  <br/>
-                  <Text target='_blank' component="a" href="#" className="kuadrant-dashboard-resource-link">
-                    {t('Kuadrant')} highlights <ExternalLinkAltIcon />
-                  </Text>
-                  <br/>
-                  {/* TODO: portal link */}
-                  <Text target='_blank' component="a" href="https://access.redhat.com/articles/7065949" className="kuadrant-dashboard-resource-link">
-                    {t('Kuadrant')} Release Notes 
-                    {/* TODO: class for these */}
-                    <span style={{ fontSize: '0.8rem', color: 'gray', marginLeft: '8px', marginRight: '8px' }}>
-                      8 min read
-                    </span> 
-                    <ExternalLinkAltIcon />
-                  </Text>
+                  <Stack hasGutter className="pf-u-mt-md">
+                    <StackItem>
+                      <Text target='_blank' component="a" href="#" className="kuadrant-dashboard-resource-link">
+                        {t('Kuadrant')} highlights&nbsp;&nbsp;<ExternalLinkAltIcon />
+                      </Text>
+                    </StackItem>
+                    <StackItem>
+                      {/* TODO: portal link */}
+                      <Text target='_blank' component="a" href={EXTERNAL_LINKS.releaseNotes} className="kuadrant-dashboard-resource-link">
+                        {t('Kuadrant')} Release Notes
+                        {/* TODO: class for these */}
+                        <span style={{ fontSize: '0.8rem', color: 'gray', marginLeft: '8px', marginRight: '8px' }}>
+                          6 min read
+                        </span>
+                        <ExternalLinkAltIcon />
+                      </Text>
+                    </StackItem>
+                    <StackItem>
+                      <Text component="a" href={EXTERNAL_LINKS.blog} className="pf-u-display-block">
+                        Visit the blog
+                      </Text>
+                    </StackItem>
+                  </Stack>
                 </FlexItem>
                 <Divider orientation={{ default: 'vertical' }} />
                 <FlexItem flex={{ default: 'flex_1' }}>
