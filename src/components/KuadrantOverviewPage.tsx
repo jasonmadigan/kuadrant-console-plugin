@@ -19,6 +19,8 @@ import './kuadrant.css';
 import { GlobeIcon, ReplicatorIcon, OptimizeIcon, ArrowRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import { AllPoliciesListPage } from './KuadrantPoliciesPage';
+import { sortable } from '@patternfly/react-table';
+
 
 import { INTERNAL_LINKS, EXTERNAL_LINKS } from '../constants/links';
 
@@ -33,6 +35,23 @@ const KuadrantOverviewPage: React.FC = () => {
     }
     console.log(`Initial namespace: ${activeNamespace}`);
   }, [ns, activeNamespace, setActiveNamespace]);
+
+  const columns = [{
+    title: t('plugin__console-plugin-template~Name'),
+    id: 'name',
+    sort: 'metadata.name',
+    transforms: [sortable],
+  }, {
+    title: t('plugin__console-plugin-template~Type'),
+    id: 'type',
+    sort: 'kind',
+    transforms: [sortable],
+  }, {
+    title: t('plugin__console-plugin-template~Namespace'),
+    id: 'namespace',
+    sort: 'metadata.namespace',
+    transforms: [sortable],
+  }];
 
   return (
     <>
@@ -139,7 +158,7 @@ const KuadrantOverviewPage: React.FC = () => {
               <Card >
                 <CardTitle><Title headingLevel="h2">Policies</Title></CardTitle>
                 <CardBody>
-                  <AllPoliciesListPage activeNamespace='#ALL_NS#' />
+                <AllPoliciesListPage activeNamespace='#ALL_NS#' columns={columns} />
                 </CardBody>
               </Card>
             </FlexItem>

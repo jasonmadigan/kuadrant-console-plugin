@@ -76,6 +76,7 @@ type AllPoliciesTableProps = {
   unfilteredData: K8sResourceCommon[];
   loaded: boolean;
   loadError: any;
+  columns?: TableColumn<K8sResourceCommon>[]; // Added columns prop
 };
 
 type DropdownWithKebabProps = {
@@ -90,10 +91,10 @@ type PoliciesTableProps = {
   resource: Resource;
 };
 
-const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredData, loaded, loadError }) => {
+const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredData, loaded, loadError, columns }) => {
   const { t } = useTranslation();
 
-  const columns: TableColumn<K8sResourceCommon>[] = [
+  const defaultColumns: TableColumn<K8sResourceCommon>[] = [
     {
       title: t('plugin__console-plugin-template~Name'),
       id: 'name',
@@ -129,28 +130,58 @@ const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredDat
     },
   ];
 
+  const usedColumns = columns || defaultColumns;
+
   const AllPolicyRow: React.FC<RowProps<K8sResourceCommon>> = ({ obj, activeColumnIDs }) => {
     const [group, version] = obj.apiVersion.includes('/') ? obj.apiVersion.split('/') : ['', obj.apiVersion];
     return (
       <>
-        <TableData id={columns[0].id} activeColumnIDs={activeColumnIDs}>
-          <ResourceLink
-            groupVersionKind={{ group: group, version: version, kind: obj.kind }}
-            name={obj.metadata.name}
-            namespace={obj.metadata.namespace}
-          />
-        </TableData>
-        <TableData id={columns[1].id} activeColumnIDs={activeColumnIDs}>{obj.kind}</TableData>
-        <TableData id={columns[2].id} activeColumnIDs={activeColumnIDs}>
-          <ResourceLink groupVersionKind={{version: "v1", kind: "Namespace"}} name={obj.metadata.namespace} />
-        </TableData>
-        <TableData id={columns[3].id} activeColumnIDs={activeColumnIDs}>{statusConditionsAsString(obj)}</TableData>
-        <TableData id={columns[4].id} activeColumnIDs={activeColumnIDs}>
-          <Timestamp timestamp={obj.metadata.creationTimestamp} />
-        </TableData>
-        <TableData id={columns[5].id} activeColumnIDs={activeColumnIDs} className="pf-v5-c-table__action">
-          <DropdownWithKebab obj={obj} />
-        </TableData>
+        {usedColumns.map((column) => {
+          switch (column.id) {
+            case 'name':
+              return (
+                <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
+                  <ResourceLink
+                    groupVersionKind={{ group: group, version: version, kind: obj.kind }}
+                    name={obj.metadata.name}
+                    namespace={obj.metadata.namespace}
+                  />
+                </TableData>
+              );
+            case 'type':
+              return (
+                <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
+                  {obj.kind}
+                </TableData>
+              );
+            case 'namespace':
+              return (
+                <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
+                  <ResourceLink groupVersionKind={{ version: 'v1', kind: 'Namespace' }} name={obj.metadata.namespace} />
+                </TableData>
+              );
+            case 'Status':
+              return (
+                <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
+                  {statusConditionsAsString(obj)}
+                </TableData>
+              );
+            case 'Created':
+              return (
+                <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
+                  <Timestamp timestamp={obj.metadata.creationTimestamp} />
+                </TableData>
+              );
+            case 'dropdown-with-kebab':
+              return (
+                <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs} className="pf-v5-c-table__action">
+                  <DropdownWithKebab obj={obj} />
+                </TableData>
+              );
+            default:
+              return null;
+          }
+        })}
       </>
     );
   };
@@ -161,7 +192,7 @@ const AllPoliciesTable: React.FC<AllPoliciesTableProps> = ({ data, unfilteredDat
       unfilteredData={unfilteredData}
       loaded={loaded}
       loadError={loadError}
-      columns={columns}
+      columns={usedColumns}
       Row={AllPolicyRow}
     />
   );
@@ -226,7 +257,7 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
             {t('Edit')}
           </DropdownItem>
           <DropdownItem value="delete" key="delete">
-          {t('Delete')}
+            {t('Delete')}
           </DropdownItem>
         </DropdownList>
       </Dropdown>
@@ -240,7 +271,7 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
       >
         <ModalHeader title="Confirm Delete" />
         <ModalBody>
-          {t("Are you sure you want to delete the policy")}: <b>{obj.metadata.name}</b>?
+          {t('Are you sure you want to delete the policy')}: <b>{obj.metadata.name}</b>?
         </ModalBody>
         <ModalFooter>
           <Button key="confirm" variant={ButtonVariant.danger} onClick={onDeleteConfirm}>
@@ -295,9 +326,11 @@ const PoliciesTable: React.FC<PoliciesTableProps> = ({ data, unfilteredData, loa
           <ResourceLink groupVersionKind={resource.gvk} name={obj.metadata.name} namespace={obj.metadata.namespace} />
         </TableData>
         <TableData id={columns[1].id} activeColumnIDs={activeColumnIDs}>
-          <ResourceLink groupVersionKind={{version: "v1", kind: "Namespace"}} name={obj.metadata.namespace} />
+          <ResourceLink groupVersionKind={{ version: 'v1', kind: 'Namespace' }} name={obj.metadata.namespace} />
         </TableData>
-        <TableData id={columns[2].id} activeColumnIDs={activeColumnIDs}>{statusConditionsAsString(obj)}</TableData>
+        <TableData id={columns[2].id} activeColumnIDs={activeColumnIDs}>
+          {statusConditionsAsString(obj)}
+        </TableData>
         <TableData id={columns[3].id} activeColumnIDs={activeColumnIDs}>
           <Timestamp timestamp={obj.metadata.creationTimestamp} />
         </TableData>
@@ -320,7 +353,7 @@ const PoliciesTable: React.FC<PoliciesTableProps> = ({ data, unfilteredData, loa
   );
 };
 
-export const AllPoliciesListPage: React.FC<{ activeNamespace: string }> = ({ activeNamespace }) => {
+export const AllPoliciesListPage: React.FC<{ activeNamespace: string; columns?: TableColumn<K8sResourceCommon>[] }> = ({ activeNamespace, columns }) => {
   const watchedResources = resources.map((resource) => {
     const { group, version, kind } = resource.gvk;
     return useK8sWatchResource<ExtendedK8sResourceCommon[]>({
@@ -345,7 +378,7 @@ export const AllPoliciesListPage: React.FC<{ activeNamespace: string }> = ({ act
           </Alert>
         </AlertGroup>
         <ListPageFilter data={data} loaded={loaded} onFilterChange={onFilterChange} />
-        <AllPoliciesTable data={filteredData} unfilteredData={data} loaded={loaded} loadError={loadError} />
+        <AllPoliciesTable data={filteredData} unfilteredData={data} loaded={loaded} loadError={loadError} columns={columns} />
       </ListPageBody>
     </>
   );
