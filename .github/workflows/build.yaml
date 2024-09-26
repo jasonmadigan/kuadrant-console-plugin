@@ -1,0 +1,50 @@
+name: Build and Push Image
+
+on:
+  push:
+    branches:
+      - main  # This ensures the action only runs on pushes to the main branch
+
+env:
+  REGISTRY_USER: ${{ secrets.QUAY_USER }}
+  IMAGE_REGISTRY: quay.io
+  REGISTRY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+jobs:
+  build:
+    name: Build and push image
+    runs-on: ubuntu-22.04
+
+    steps:
+      # Step 1: Log in to Quay.io
+      - name: Log in to Quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+          registry: ${{ env.IMAGE_REGISTRY }}
+
+      # Step 2: Check out the repository
+      - uses: actions/checkout@v4
+
+      # Step 3: Build the image using Buildah
+      - name: Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: quay.io/kuadrant/console-plugin  # Fully qualify the image name for Quay.io
+          tags: latest,${{ github.sha }}  # Tag as "latest" and with the current commit SHA
+          containerfiles: |
+            ./Dockerfile
+
+      # Step 4: Push the image to Quay.io
+      - name: Push To Quay.io
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+
+      # Step 5: Print the image URL
+      - name: Print image URL
+        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
