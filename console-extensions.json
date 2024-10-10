@@ -29,7 +29,18 @@
         "version": "v1alpha1",
         "kind": "DNSPolicy"
       },
-      "component": { "$codeRef": "KuadrantDNSPolicyCreatePage" }
+      "component": { "$codeRef": "KuadrantDNSPolicyCreatePage" },
+      "flags": {
+        "required": ["NAMESPACE"]
+      }
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "path": "/k8s/ns/:ns/kuadrant.io~v1alpha1~DNSPolicy/~new",
+      "component": { "$codeRef": "KuadrantDNSPolicyCreatePage" },
+      "exact": true
     }
   },
   {
