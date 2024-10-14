@@ -9,6 +9,8 @@
     "allowJs": true,
     "strict": false,
     "noUnusedLocals": true,
+    "esModuleInterop": true,              // Add this line
+    "allowSyntheticDefaultImports": true, // Add this line
     "paths": {
       "react": [ "./node_modules/@types/react" ]
     }

@@ -109,6 +109,22 @@ const KuadrantOverviewPage: React.FC = () => {
     props: { className: 'pf-v5-c-table__action' },
   }];
 
+  const gatewayColumns = [{
+    title: t('plugin__kuadrant-console-plugin~Name'),
+    id: 'name',
+    sort: 'metadata.name',
+    transforms: [sortable],
+  }, {
+    title: t('plugin__kuadrant-console-plugin~Namespace'),
+    id: 'namespace',
+    sort: 'metadata.namespace',
+    transforms: [sortable],
+  }, {
+    title: '',
+    id: 'kebab',
+    props: { className: 'pf-v5-c-table__action' },
+  }];
+
   return (
     <>
       <Helmet>
@@ -249,7 +265,7 @@ const KuadrantOverviewPage: React.FC = () => {
                     resources={[
                       { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'Gateway' },
                     ]}
-                    columns={columns}
+                    columns={gatewayColumns}
                     namespace='#ALL_NS#'
                   />
                 </CardBody>
