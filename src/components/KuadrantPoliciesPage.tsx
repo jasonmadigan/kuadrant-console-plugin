@@ -10,11 +10,10 @@ import {
   useActiveNamespace,
   useActivePerspective,
   ListPageCreateLink,
-  ListPageBody
+  ListPageBody,
 } from '@openshift-console/dynamic-plugin-sdk';
-
-import { Title } from '@patternfly/react-core';
-import { Alert, AlertGroup } from '@patternfly/react-core';
+import { Title, Flex, Spinner, FlexItem, Alert, AlertGroup } from '@patternfly/react-core';
+import { getKindGroupLatestVersion } from '../utils/getModelFromResource'; // Make sure you import this
 import ResourceList from './ResourceList';
 import './kuadrant.css';
 
@@ -27,19 +26,13 @@ interface Resource {
   };
 }
 
-export const resources: Resource[] = [
-  { name: 'AuthPolicies', gvk: { group: 'kuadrant.io', version: 'v1beta2', kind: 'AuthPolicy' } },
-  { name: 'DNSPolicies', gvk: { group: 'kuadrant.io', version: 'v1alpha1', kind: 'DNSPolicy' } },
-  { name: 'RateLimitPolicies', gvk: { group: 'kuadrant.io', version: 'v1beta2', kind: 'RateLimitPolicy' } },
-  { name: 'TLSPolicies', gvk: { group: 'kuadrant.io', version: 'v1alpha1', kind: 'TLSPolicy' } },
-];
-
 export const AllPoliciesListPage: React.FC<{
   activeNamespace: string;
   columns?: TableColumn<K8sResourceCommon>[];
   showAlertGroup?: boolean;
   paginationLimit?: number;
-}> = ({ activeNamespace, columns, showAlertGroup = false, paginationLimit }) => {
+  resources: Resource[]; // Add resources as a prop
+}> = ({ activeNamespace, columns, showAlertGroup = false, paginationLimit, resources }) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
 
   return (
@@ -63,7 +56,10 @@ export const AllPoliciesListPage: React.FC<{
   );
 };
 
-const PoliciesListPage: React.FC<{ resource: Resource; activeNamespace: string }> = ({ resource, activeNamespace }) => {
+const PoliciesListPage: React.FC<{ resource: Resource; activeNamespace: string }> = ({
+  resource,
+  activeNamespace,
+}) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
   const resolvedNamespace = activeNamespace === '#ALL_NS#' ? 'default' : activeNamespace;
 
@@ -79,7 +75,9 @@ const PoliciesListPage: React.FC<{ resource: Resource; activeNamespace: string }
         <div className="co-m-nav-title--row kuadrant-resource-create-container">
           <ResourceList resources={[resource.gvk]} namespace={activeNamespace} />
           <div className="kuadrant-resource-create-button pf-u-mt-md">
-            <ListPageCreateLink to={`/k8s/ns/${resolvedNamespace}/${resource.gvk.group}~${resource.gvk.version}~${resource.gvk.kind}/~new`}>
+            <ListPageCreateLink
+              to={`/k8s/ns/${resolvedNamespace}/${resource.gvk.group}~${resource.gvk.version}~${resource.gvk.kind}/~new`}
+            >
               {t(`plugin__kuadrant-console-plugin~Create ${resource.gvk.kind}`)}
             </ListPageCreateLink>
           </div>
@@ -94,12 +92,52 @@ const KuadrantPoliciesPage: React.FC = () => {
   const { ns } = useParams<{ ns: string }>();
   const [activeNamespace, setActiveNamespace] = useActiveNamespace();
   const [activePerspective] = useActivePerspective();
+  const [resources, setResources] = React.useState<Resource[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true); // Loading state
 
   React.useEffect(() => {
     if (ns && ns !== activeNamespace) {
       setActiveNamespace(ns);
     }
   }, [ns, activeNamespace, setActiveNamespace]);
+
+  // Fetch dynamic versions using getKindGroupLatestVersion
+  React.useEffect(() => {
+    const fetchResources = async () => {
+      const resourceDefinitions: Resource[] = [
+        { name: 'AuthPolicies', gvk: { group: 'kuadrant.io', version: '', kind: 'AuthPolicy' } },
+        { name: 'DNSPolicies', gvk: { group: 'kuadrant.io', version: '', kind: 'DNSPolicy' } },
+        {
+          name: 'RateLimitPolicies',
+          gvk: { group: 'kuadrant.io', version: '', kind: 'RateLimitPolicy' },
+        },
+        { name: 'TLSPolicies', gvk: { group: 'kuadrant.io', version: '', kind: 'TLSPolicy' } },
+      ];
+
+      try {
+        const fetchPromises = resourceDefinitions.map(async (resource) => {
+          const { kind, group } = resource.gvk;
+          const result = await getKindGroupLatestVersion(kind, group);
+          return {
+            ...resource,
+            gvk: {
+              ...resource.gvk,
+              version: result.version || 'v1', // Default to 'v1' if no version is found
+            },
+          };
+        });
+
+        const resolvedResources = await Promise.all(fetchPromises);
+        setResources(resolvedResources);
+      } catch (error) {
+        console.error('Error fetching resource versions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResources();
+  }, []);
 
   const defaultColumns: TableColumn<K8sResourceCommon>[] = [
     {
@@ -138,7 +176,11 @@ const KuadrantPoliciesPage: React.FC = () => {
   ];
 
   const All: React.FC = () => (
-    <AllPoliciesListPage activeNamespace={activeNamespace} columns={defaultColumns} />
+    <AllPoliciesListPage
+      activeNamespace={activeNamespace}
+      columns={defaultColumns}
+      resources={resources}
+    />
   );
 
   const Auth: React.FC = () => (
@@ -148,6 +190,22 @@ const KuadrantPoliciesPage: React.FC = () => {
   const RateLimit: React.FC = () => (
     <PoliciesListPage resource={resources[2]} activeNamespace={activeNamespace} />
   );
+
+  if (loading) {
+    return (
+      <Flex
+        direction={{ default: 'column' }}
+        alignItems={{ default: 'alignItemsCenter' }}
+        justifyContent={{ default: 'justifyContentCenter' }}
+        style={{ height: '100%', minHeight: '250px' }}
+      >
+        <Spinner size="lg" />
+        <FlexItem>
+          <Title headingLevel="h1">{t('Loading...')}</Title>
+        </FlexItem>
+      </Flex>
+    );
+  }
 
   let pages = [
     {
