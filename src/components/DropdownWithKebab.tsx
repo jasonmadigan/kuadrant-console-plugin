@@ -11,7 +11,7 @@ import {
 } from '@patternfly/react-core';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@patternfly/react-core/next';
 import { k8sDelete, K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
-import getModelFromResource from '../utils/getModelFromResource'; // Assume you have a utility for getting the model from the resource
+import { getModelFromResource } from '../utils/getModelFromResource'; // Assume you have a utility for getting the model from the resource
 type DropdownWithKebabProps = {
   obj: K8sResourceCommon;
 };
