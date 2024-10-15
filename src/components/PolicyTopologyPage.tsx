@@ -9,6 +9,9 @@ import {
   CardBody,
   TextContent,
   Text,
+  Flex,
+  Spinner,
+  FlexItem,
 } from '@patternfly/react-core';
 import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import {
@@ -39,6 +42,8 @@ import {
 import { CubesIcon, CloudUploadAltIcon, TopologyIcon, RouteIcon } from '@patternfly/react-icons';
 import * as dot from 'graphlib-dot';
 import './kuadrant.css';
+
+import { getKindGroupLatestVersion } from '../utils/getModelFromResource';
 
 // Fetch the config.js file dynamically at runtime
 // Normally served from <cluster-host>/api/plugins/kuadrant-console/config.js
@@ -76,18 +81,18 @@ export const kindToAbbr = (kind: string) => {
   return (kind.replace(/[^A-Z]/g, '') || kind.toUpperCase()).slice(0, 4);
 };
 
-// TODO: need a generic way to fetch latest versions of resources based on kind + group
-const resourceGVKMapping: { [key: string]: { group: string; version: string; kind: string } } = {
-  Gateway: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'Gateway' },
-  HTTPRoute: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'HTTPRoute' },
-  TLSPolicy: { group: 'kuadrant.io', version: 'v1alpha1', kind: 'TLSPolicy' },
-  DNSPolicy: { group: 'kuadrant.io', version: 'v1alpha1', kind: 'DNSPolicy' },
-  AuthPolicy: { group: 'kuadrant.io', version: 'v1beta2', kind: 'AuthPolicy' },
-  RateLimitPolicy: { group: 'kuadrant.io', version: 'v1beta2', kind: 'RateLimitPolicy' },
-  ConfigMap: { group: '', version: 'v1', kind: 'ConfigMap' },
-  Listener: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'Listener' },
-  GatewayClass: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'GatewayClass' },
-};
+// Define the resource kinds you want to fetch
+const resourceKinds: { kind: string; group: string }[] = [
+  { kind: 'Gateway', group: 'gateway.networking.k8s.io' },
+  { kind: 'HTTPRoute', group: 'gateway.networking.k8s.io' },
+  { kind: 'TLSPolicy', group: 'kuadrant.io' },
+  { kind: 'DNSPolicy', group: 'kuadrant.io' },
+  { kind: 'AuthPolicy', group: 'kuadrant.io' },
+  { kind: 'RateLimitPolicy', group: 'kuadrant.io' },
+  { kind: 'ConfigMap', group: '' }, // Core group
+  { kind: 'Listener', group: 'gateway.networking.k8s.io' },
+  { kind: 'GatewayClass', group: 'gateway.networking.k8s.io' },
+];
 
 // Convert DOT graph to PatternFly node/edge models
 const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
@@ -263,32 +268,6 @@ const CustomNode: React.FC<any> = ({
   );
 };
 
-const goToResource = (resourceType: string, resourceName: string) => {
-  let finalResourceType = resourceType;
-  let finalGVK = resourceGVKMapping[resourceType];
-
-  // special case - Listener should go to associated Gateway
-  if (resourceType === 'Listener') {
-    finalResourceType = 'Gateway';
-    finalGVK = resourceGVKMapping[finalResourceType];
-  }
-
-  const [namespace, name] = resourceName.includes('/')
-    ? resourceName.split('/')
-    : [null, resourceName];
-
-  if (!finalGVK) {
-    console.error(`GVK mapping not found for resource type: ${finalResourceType}`);
-    return;
-  }
-
-  const url = namespace
-    ? `/k8s/ns/${namespace}/${finalGVK.group}~${finalGVK.version}~${finalGVK.kind}/${name}`
-    : `/k8s/cluster/${finalGVK.group}~${finalGVK.version}~${finalGVK.kind}/${name}`;
-
-  window.location.href = url;
-};
-
 const customLayoutFactory = (type: string, graph: any): any => {
   return new DagreLayout(graph, {
     rankdir: 'TB',
@@ -298,39 +277,90 @@ const customLayoutFactory = (type: string, graph: any): any => {
   });
 };
 
-const customComponentFactory = (kind: ModelKind, type: string) => {
-  const contextMenuItem = (resourceType: string, resourceName: string) => (
-    <ContextMenuItem key="go-to-resource" onClick={() => goToResource(resourceType, resourceName)}>
-      Go to Resource
-    </ContextMenuItem>
-  );
-
-  const contextMenu = (element: any) => {
-    const resourceType = element.getData().type;
-    const resourceName = element.getLabel();
-    return [contextMenuItem(resourceType, resourceName)];
-  };
-
-  switch (type) {
-    case 'group':
-      return DefaultGroup;
-    default:
-      switch (kind) {
-        case ModelKind.graph:
-          return withPanZoom()(GraphComponent);
-        case ModelKind.node:
-          return withContextMenu(contextMenu)(CustomNode);
-        case ModelKind.edge:
-          return withSelection()(DefaultEdge);
-        default:
-          return undefined;
-      }
-  }
-};
-
 const PolicyTopologyPage: React.FC = () => {
   const [config, setConfig] = React.useState<any | null>(null);
   const [parseError, setParseError] = React.useState<string | null>(null);
+
+  // State to store dynamic GVK mapping
+  const [dynamicGVKMapping, setDynamicGVKMapping] = React.useState<{
+    [key: string]: { group: string; version: string; kind: string };
+  }>({});
+
+  const goToResource = (resourceType: string, resourceName: string) => {
+    const mapping = dynamicGVKMapping[resourceType];
+
+    if (!mapping) {
+      console.error(`GVK mapping not found for resource type: ${resourceType}`);
+      return;
+    }
+
+    const { group, version, kind } = mapping;
+
+    // Special case: Listener should go to associated Gateway
+    let finalGroup = group;
+    let finalKind = kind;
+    let finalVersion = version;
+
+    if (resourceType === 'Listener') {
+      finalKind = 'Gateway';
+      const gatewayMapping = dynamicGVKMapping['Gateway'];
+      if (!gatewayMapping) {
+        console.error(`GVK mapping not found for Gateway associated with Listener.`);
+        return;
+      }
+      finalGroup = gatewayMapping.group;
+      finalVersion = gatewayMapping.version;
+    }
+
+    const [namespace, name] = resourceName.includes('/')
+      ? resourceName.split('/')
+      : [null, resourceName];
+
+    const url = namespace
+      ? `/k8s/ns/${namespace}/${finalGroup}~${finalVersion}~${finalKind}/${name}`
+      : `/k8s/cluster/${finalGroup}~${finalVersion}~${finalKind}/${name}`;
+
+    window.location.href = url;
+  };
+
+  const customComponentFactory = (kind: ModelKind, type: string) => {
+    const contextMenuItem = (resourceType: string, resourceName: string) => (
+      <ContextMenuItem
+        key="go-to-resource"
+        onClick={() => goToResource(resourceType, resourceName)}
+      >
+        Go to Resource
+      </ContextMenuItem>
+    );
+
+    const contextMenu = (element: any) => {
+      const resourceType = element.getData().type;
+      const resourceName = element.getLabel();
+      return [contextMenuItem(resourceType, resourceName)];
+    };
+
+    switch (type) {
+      case 'group':
+        return DefaultGroup;
+      default:
+        switch (kind) {
+          case ModelKind.graph:
+            return withPanZoom()(GraphComponent);
+          case ModelKind.node:
+            return withContextMenu(contextMenu)(CustomNode);
+          case ModelKind.edge:
+            return withSelection()(DefaultEdge);
+          default:
+            return undefined;
+        }
+    }
+  };
+
+  // State to track loading status of dynamic mapping
+  const [isGVKLoading, setIsGVKLoading] = React.useState<boolean>(true);
+
+  // State to track errors in dynamic mapping
+  const [gvkError, setGvkError] = React.useState<string | null>(null);
 
   // Fetch the configuration on mount
   React.useEffect(() => {
@@ -345,6 +375,45 @@ const PolicyTopologyPage: React.FC = () => {
     };
     loadConfig();
   }, []);
+
+  // Fetch dynamic GVK mapping after config is loaded
+  React.useEffect(() => {
+    const fetchGVKMapping = async () => {
+      if (resourceKinds.length === 0) {
+        setIsGVKLoading(false);
+        return;
+      }
+
+      const mapping: { [key: string]: { group: string; version: string; kind: string } } = {};
+      try {
+        // Fetch versions in parallel
+        const fetchPromises = resourceKinds.map(async (resource) => {
+          const { kind, group } = resource;
+          const result = await getKindGroupLatestVersion(kind, group);
+          if (result.version) {
+            mapping[kind] = {
+              group: result.group,
+              version: result.version,
+              kind: result.kind,
+            };
+          }
+        });
+
+        await Promise.all(fetchPromises);
+        setDynamicGVKMapping(mapping);
+        setIsGVKLoading(false);
+      } catch (error) {
+        console.error('Error fetching dynamic GVK mapping:', error);
+        setGvkError('Failed to fetch resource versions.');
+        setIsGVKLoading(false);
+      }
+    };
+
+    // Only fetch if config is loaded
+    if (config) {
+      fetchGVKMapping();
+    }
+  }, [config]);
 
   // Watch the ConfigMap named "topology" in the namespace provided by the config.js
   const [configMap, loaded, loadError] = useK8sWatchResource<any>(
@@ -389,7 +458,7 @@ const PolicyTopologyPage: React.FC = () => {
 
   // Handle data updates
   React.useEffect(() => {
-    if (loaded && !loadError && configMap) {
+    if (loaded && !loadError && configMap && !isGVKLoading && !gvkError) {
       const dotString = configMap.data?.topology || '';
       if (dotString) {
         try {
@@ -418,13 +487,45 @@ const PolicyTopologyPage: React.FC = () => {
     } else if (loadError) {
       setParseError('Failed to load topology data.');
     }
-  }, [configMap, loaded, loadError]);
+  }, [configMap, loaded, loadError, isGVKLoading, gvkError]);
 
   // Memoize the controller
   const controller = controllerRef.current;
 
   if (!config) {
-    return <div>Loading configuration...</div>;
+    return (
+      <Flex
+        direction={{ default: 'column' }}
+        alignItems={{ default: 'alignItemsCenter' }}
+        justifyContent={{ default: 'justifyContentCenter' }}
+        style={{ height: '100%', minHeight: '250px' }}
+      >
+        <Spinner size="lg" />
+        <FlexItem>
+          <Text component="p">Loading configuration...</Text>
+        </FlexItem>
+      </Flex>
+    );
+  }
+
+  if (isGVKLoading) {
+    return (
+      <Flex
+        direction={{ default: 'column' }}
+        alignItems={{ default: 'alignItemsCenter' }}
+        justifyContent={{ default: 'justifyContentCenter' }}
+        style={{ height: '100%', minHeight: '250px' }}
+      >
+        <Spinner size="lg" />
+        <FlexItem>
+          <Text component="p">Loading Topology...</Text>
+        </FlexItem>
+      </Flex>
+    );
+  }
+
+  if (gvkError) {
+    return <div>Error: {gvkError}</div>;
   }
 
   return (
