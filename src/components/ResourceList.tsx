@@ -35,29 +35,97 @@ import {
 } from '@patternfly/react-icons';
 import DropdownWithKebab from './DropdownWithKebab';
 
-const getStatusLabel = (obj: any) => {
-  // Check if status has parents and handle accordingly
-  const parentConditions = obj.status?.parents?.flatMap((parent: any) => parent.conditions) || [];
+const getStatusLabel = (obj) => {
+  const isGateway = obj.kind === 'Gateway';
+
+  if (isGateway) {
+    const conditions = obj.status?.conditions || [];
+
+    const acceptedCondition = conditions.find(
+      (cond) => cond.type === 'Accepted' && cond.status === 'True',
+    );
+    const programmedCondition = conditions.find(
+      (cond) => cond.type === 'Programmed' && cond.status === 'True',
+    );
+
+    // affected policies to check
+    const policiesAffected = [
+      'kuadrant.io/DNSPolicyAffected',
+      'kuadrant.io/TLSPolicyAffected',
+      'kuadrant.io/AuthPolicyAffected',
+      'kuadrant.io/RateLimitPolicyAffected',
+    ];
+
+    // at least one policy affected
+    const hasPolicy = policiesAffected.some((policy) =>
+      conditions.some((cond) => cond.type === policy && cond.status === 'True'),
+    );
+
+    // no errors
+    const hasPolicyError = policiesAffected.some((policy) =>
+      conditions.some((cond) => cond.type === policy && cond.status === 'False'),
+    );
+
+    let labelText;
+    let color;
+    let icon;
+
+    if (acceptedCondition && programmedCondition) {
+      if (hasPolicy && !hasPolicyError) {
+        labelText = 'Enforced';
+        color = 'green';
+        icon = <CheckCircleIcon />;
+      } else {
+        labelText = 'Accepted (Not Enforced)';
+        color = 'purple';
+        icon = <UploadIcon />;
+      }
+    } else if (programmedCondition) {
+      labelText = 'Programmed';
+      color = 'blue';
+      icon = <CheckCircleIcon />;
+    } else if (conditions.some((cond) => cond.type === 'Conflicted' && cond.status === 'True')) {
+      labelText = 'Conflicted';
+      color = 'red';
+      icon = <ExclamationTriangleIcon />;
+    } else if (conditions.some((cond) => cond.type === 'ResolvedRefs' && cond.status === 'True')) {
+      labelText = 'Resolved Refs';
+      color = 'blue';
+      icon = <CheckCircleIcon />;
+    } else {
+      labelText = 'Unknown';
+      color = 'orange';
+      icon = <ExclamationTriangleIcon />;
+    }
+
+    return (
+      <Label isCompact icon={icon} color={color}>
+        {labelText}
+      </Label>
+    );
+  }
+
+  const parentConditions = obj.status?.parents?.flatMap((parent) => parent.conditions) || [];
 
   if (parentConditions.length > 0) {
     const acceptedCondition = parentConditions.find(
-      (cond: any) => cond.type === 'Accepted' && cond.status === 'True',
+      (cond) => cond.type === 'Accepted' && cond.status === 'True',
     );
     const programmedCondition = parentConditions.find(
-      (cond: any) => cond.type === 'Programmed' && cond.status === 'True',
+      (cond) => cond.type === 'Programmed' && cond.status === 'True',
     );
     const conflictedCondition = parentConditions.find(
-      (cond: any) => cond.type === 'Conflicted' && cond.status === 'True',
+      (cond) => cond.type === 'Conflicted' && cond.status === 'True',
     );
     const resolvedRefsCondition = parentConditions.find(
-      (cond: any) => cond.type === 'ResolvedRefs' && cond.status === 'True',
+      (cond) => cond.type === 'ResolvedRefs' && cond.status === 'True',
     );
 
-    let labelText: string;
-    let color: 'green' | 'blue' | 'red' | 'orange';
-    let icon: React.ReactNode;
+    let labelText;
+    let color;
+    let icon;
 
-    if (acceptedCondition) {
+    if (acceptedCondition && programmedCondition) {
       labelText = 'Accepted';
       color = 'green';
       icon = <CheckCircleIcon />;
@@ -86,8 +154,9 @@ const getStatusLabel = (obj: any) => {
     );
   }
 
-  // If no parent conditions, fallback to general condition checks
-  if (!obj.status || !obj.status.conditions || obj.status.conditions.length === 0) {
+  const generalConditions = obj.status?.conditions || [];
+
+  if (generalConditions.length === 0) {
     return (
       <Label isCompact icon={<OutlinedHourglassIcon />} color="cyan">
         Creating
@@ -95,31 +164,31 @@ const getStatusLabel = (obj: any) => {
     );
   }
 
-  const enforcedCondition = obj.status.conditions.find(
-    (cond: any) => cond.type === 'Enforced' && cond.status === 'True',
+  const enforcedCondition = generalConditions.find(
+    (cond) => cond.type === 'Enforced' && cond.status === 'True',
   );
-  const acceptedCondition = obj.status.conditions.find(
-    (cond: any) => cond.type === 'Accepted' && cond.status === 'True',
+  const acceptedCondition = generalConditions.find(
+    (cond) => cond.type === 'Accepted' && cond.status === 'True',
   );
-  const acceptedConditionFalse = obj.status.conditions.find(
-    (cond: any) => cond.type === 'Accepted' && cond.status === 'False',
+  const acceptedConditionFalse = generalConditions.find(
+    (cond) => cond.type === 'Accepted' && cond.status === 'False',
   );
-  const overriddenCondition = obj.status.conditions.find(
-    (cond: any) => cond.type === 'Overridden' && cond.status === 'False',
+  const overriddenCondition = generalConditions.find(
+    (cond) => cond.type === 'Overridden' && cond.status === 'False',
   );
-  const conflictedCondition = obj.status.conditions.find(
-    (cond: any) => cond.reason === 'Conflicted' && cond.status === 'False',
+  const conflictedCondition = generalConditions.find(
+    (cond) => cond.reason === 'Conflicted' && cond.status === 'False',
   );
-  const targetNotFoundCondition = obj.status.conditions.find(
-    (cond: any) => cond.reason === 'TargetNotFound' && cond.status === 'False',
+  const targetNotFoundCondition = generalConditions.find(
+    (cond) => cond.reason === 'TargetNotFound' && cond.status === 'False',
   );
-  const unknownCondition = obj.status.conditions.find(
-    (cond: any) => cond.reason === 'Unknown' && cond.status === 'False',
+  const unknownCondition = generalConditions.find(
+    (cond) => cond.reason === 'Unknown' && cond.status === 'False',
   );
 
-  let labelText: string;
-  let color: 'blue' | 'green' | 'red' | 'orange' | 'grey' | 'purple' | 'cyan';
-  let icon: React.ReactNode;
+  let labelText;
+  let color;
+  let icon;
 
   if (enforcedCondition) {
     labelText = 'Enforced';
