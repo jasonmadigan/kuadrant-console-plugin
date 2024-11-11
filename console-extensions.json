@@ -61,7 +61,7 @@
     "properties": {
       "model": {
         "group": "kuadrant.io",
-        "version": "v1beta3",
+        "version": "v1",
         "kind": "RateLimitPolicy"
       },
       "component": { "$codeRef": "KuadrantRateLimitPolicyCreatePage" }
@@ -94,7 +94,7 @@
     "properties": {
       "model": {
         "group": "kuadrant.io",
-        "version": "v1beta3",
+        "version": "v1",
         "kind": "AuthPolicy"
       },
       "component": { "$codeRef": "KuadrantAuthPolicyCreatePage" }
