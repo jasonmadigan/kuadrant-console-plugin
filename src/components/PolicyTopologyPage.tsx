@@ -9,6 +9,9 @@ import {
   CardBody,
   TextContent,
   Text,
+  Select,
+  SelectOption,
+  Button,
 } from '@patternfly/react-core';
 import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import {
@@ -40,6 +43,20 @@ import { CubesIcon, CloudUploadAltIcon, TopologyIcon, RouteIcon } from '@pattern
 import * as dot from 'graphlib-dot';
 import './kuadrant.css';
 import resourceGVKMapping from '../utils/latest';
+
+interface ConfigMap {
+  metadata: {
+    name: string;
+    namespace: string;
+    labels?: {
+      [key: string]: string;
+    };
+  };
+  data: {
+    topology?: string;
+    [key: string]: any;
+  };
+}
 
 // Fetch the config.js file dynamically at runtime
 // Normally served from <cluster-host>/api/plugins/kuadrant-console/config.js
@@ -98,7 +115,7 @@ const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
       Kuadrant: NodeShape.ellipse,
     };
 
-    // excluded kinds that will be rewired if connected to other nodes
+    // Excluded kinds that will be rewired if connected to other nodes
     const excludedKinds = new Set([
       'Issuer',
       'ClusterIssuer',
@@ -111,7 +128,7 @@ const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
       'AuthConfig',
     ]);
 
-    // kinds for unassociated policies - these will be grouped
+    // Kinds for unassociated policies - these will be grouped
     const unassociatedPolicies = new Set([
       'TLSPolicy',
       'DNSPolicy',
@@ -119,7 +136,7 @@ const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
       'RateLimitPolicy',
     ]);
 
-    // kinds for Kuadrant internals - these will be grouped also
+    // Kinds for Kuadrant internals - these will be grouped also
     const kuadrantInternals = new Set([
       'ConfigMap',
       'Kuadrant',
@@ -128,7 +145,7 @@ const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
       'ConsolePlugin',
     ]);
 
-    // reconnect edges for excluded, connected nodes (e.g. GatewayClass)
+    // Reconnect edges for excluded, connected nodes (e.g., GatewayClass)
     const rewireExcludedEdges = (graph, sourceNodeId, targetNodeId) => {
       const sourceNode = graph.node(sourceNodeId);
       const targetNode = graph.node(targetNodeId);
@@ -167,14 +184,14 @@ const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
       connectedNodeIds.add(target);
     };
 
-    // process edges with excluded kinds reconnected
+    // Process edges with excluded kinds reconnected
     graph
       .edges()
       .forEach(({ v: sourceNodeId, w: targetNodeId }) =>
         rewireExcludedEdges(graph, sourceNodeId, targetNodeId),
       );
 
-    // create nodes while excluding specified kinds
+    // Create nodes while excluding specified kinds
     graph.nodes().forEach((nodeId) => {
       const nodeData = graph.node(nodeId);
       const [resourceType, resourceName] = nodeData.label.split('\\n');
@@ -323,7 +340,7 @@ const goToResource = (resourceType: string, resourceName: string) => {
   let finalResourceType = resourceType;
   let finalGVK = resourceGVKMapping[resourceType];
 
-  // special case - Listener should go to associated Gateway
+  // Special case - Listener should go to associated Gateway
   if (resourceType === 'Listener') {
     finalResourceType = 'Gateway';
     finalGVK = resourceGVKMapping[finalResourceType];
@@ -388,6 +405,10 @@ const PolicyTopologyPage: React.FC = () => {
   const [config, setConfig] = React.useState<any | null>(null);
   const [parseError, setParseError] = React.useState<string | null>(null);
 
+  // state for ConfigMap selection
+  const [isSelectOpen, setIsSelectOpen] = React.useState(false);
+  const [selectedConfigMap, setSelectedConfigMap] = React.useState<string | undefined>(undefined);
+
   // Fetch the configuration on mount
   React.useEffect(() => {
     const loadConfig = async () => {
@@ -402,18 +423,36 @@ const PolicyTopologyPage: React.FC = () => {
     loadConfig();
   }, []);
 
-  // Watch the ConfigMap named "topology" in the namespace provided by the config.js
-  const [configMap, loaded, loadError] = useK8sWatchResource<any>(
-    config
+  // Watch a list of ConfigMaps with label kuadrant.io/topology: "true"
+  const [configMapList, loadedList, loadErrorList] = useK8sWatchResource<ConfigMap[]>({
+    groupVersionKind: {
+      group: '',
+      version: 'v1',
+      kind: 'ConfigMap',
+    },
+    namespace: config ? config.TOPOLOGY_CONFIGMAP_NAMESPACE : 'kuadrant-system', // Default namespace
+    namespaced: true,
+    selector: {
+      matchLabels: {
+        'kuadrant.io/topology': 'true',
+      },
+    },
+    isList: true,
+  });
+
+  // Watch the selected ConfigMap
+  const [selectedConfigMapData, loadedSelected, loadErrorSelected] = useK8sWatchResource<ConfigMap>(
+    selectedConfigMap
       ? {
           groupVersionKind: {
+            group: '',
             version: 'v1',
             kind: 'ConfigMap',
           },
-          name: config.TOPOLOGY_CONFIGMAP_NAME,
-          namespace: config.TOPOLOGY_CONFIGMAP_NAMESPACE,
+          name: selectedConfigMap,
+          namespace: config ? config.TOPOLOGY_CONFIGMAP_NAMESPACE : 'kuadrant-system',
         }
-      : null, // Only watch if config is loaded
+      : null, // Only watch if a ConfigMap is picked
   );
 
   const controllerRef = React.useRef<Visualization | null>(null);
@@ -443,10 +482,10 @@ const PolicyTopologyPage: React.FC = () => {
     };
   }, []);
 
-  // Handle data updates
+  // Update the topology if the selected ConfigMap changes
   React.useEffect(() => {
-    if (loaded && !loadError && configMap) {
-      const dotString = configMap.data?.topology || '';
+    if (loadedSelected && !loadErrorSelected && selectedConfigMapData) {
+      const dotString = selectedConfigMapData.data?.topology || '';
       if (dotString) {
         try {
           const { nodes, edges } = parseDotToModel(dotString);
@@ -471,17 +510,39 @@ const PolicyTopologyPage: React.FC = () => {
           setParseError('Failed to parse topology data.');
         }
       }
-    } else if (loadError) {
-      setParseError('Failed to load topology data.');
+    } else if (loadErrorSelected) {
+      setParseError('Failed to load selected topology data.');
     }
-  }, [configMap, loaded, loadError]);
+  }, [selectedConfigMapData, loadedSelected, loadErrorSelected]);
 
   // Memoize the controller
   const controller = controllerRef.current;
 
-  if (!config) {
-    return <div>Loading configuration...</div>;
-  }
+  // select toggle handler
+  const onToggle = (isOpen: boolean) => {
+    setIsSelectOpen(isOpen);
+  };
+
+  const onSelect = (event: React.MouseEvent<Element, MouseEvent>, selection: string) => {
+    setSelectedConfigMap(selection);
+    setIsSelectOpen(false);
+  };
+
+  const configMapOptions = configMapList
+    ? configMapList
+        .filter((cm) => cm.metadata.name)
+        .map((cm) => ({
+          label: cm.metadata.name,
+          value: cm.metadata.name,
+        }))
+    : [];
+
+  // select the first ConfigMap by default
+  React.useEffect(() => {
+    if (loadedList && !loadErrorList && configMapList.length > 0 && !selectedConfigMap) {
+      setSelectedConfigMap(configMapList[0].metadata.name);
+    }
+  }, [loadedList, loadErrorList, configMapList, selectedConfigMap]);
 
   return (
     <>
@@ -500,15 +561,50 @@ const PolicyTopologyPage: React.FC = () => {
                 <Text component="p" className="pf-u-mb-md">
                   This view visualizes the relationships and interactions between different
                   resources within your cluster related to Kuadrant, allowing you to explore
-                  connections between Gateways, HTTPRoutes and Kuadrant Policies.
+                  connections between Gateways, HTTPRoutes, and Kuadrant Policies.
                 </Text>
               </TextContent>
-              {!loaded ? (
-                <div>Loading topology...</div>
-              ) : loadError ? (
-                <div>Error loading topology: {loadError.message}</div>
+
+              {/* Topology configmap picker */}
+              <Select
+                variant="single"
+                aria-label="Select ConfigMap"
+                onToggle={onToggle}
+                onSelect={onSelect}
+                isOpen={isSelectOpen}
+                selections={selectedConfigMap}
+                placeholderText="Select a Topology ConfigMap"
+                className="pf-u-mb-md"
+                toggle={(toggleRef) => (
+                  <Button
+                    variant="control"
+                    aria-label="Select ConfigMap"
+                    onClick={() => setIsSelectOpen(!isSelectOpen)}
+                    ref={toggleRef}
+                  >
+                    {selectedConfigMap || 'Select a Topology ConfigMap'}
+                  </Button>
+                )}
+                isDisabled={!loadedList || loadErrorList || configMapOptions.length === 0}
+                isClearable={false}
+              >
+                {configMapOptions.map((option) => (
+                  <SelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectOption>
+                ))}
+              </Select>
+
+              {!selectedConfigMap ? (
+                <div className="pf-u-mt-md">Please select a Topology.</div>
+              ) : !loadedSelected ? (
+                <div className="pf-u-mt-md">Loading topology...</div>
+              ) : loadErrorSelected ? (
+                <div className="pf-u-mt-md">
+                  Error loading topology: {loadErrorSelected.message}
+                </div>
               ) : parseError ? (
-                <div>Error parsing topology: {parseError}</div>
+                <div className="pf-u-mt-md">Error parsing topology: {parseError}</div>
               ) : (
                 controller && (
                   <TopologyView
@@ -538,6 +634,23 @@ const PolicyTopologyPage: React.FC = () => {
                     </VisualizationProvider>
                   </TopologyView>
                 )
+              )}
+
+              {/* loading state for CM list */}
+              {!loadedList && !loadErrorList && selectedConfigMap === undefined && (
+                <div className="pf-u-mt-md">Loading Topologies...</div>
+              )}
+
+              {/* error state for CM list */}
+              {loadErrorList && (
+                <div className="pf-u-mt-md">
+                  Error loading Topology ConfigMaps: {loadErrorList.message}
+                </div>
+              )}
+
+              {/* no ConfigMaps found */}
+              {loadedList && configMapOptions.length === 0 && (
+                <div className="pf-u-mt-md">No topology ConfigMaps found.</div>
               )}
             </CardBody>
           </Card>
