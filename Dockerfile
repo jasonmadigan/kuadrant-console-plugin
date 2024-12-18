@@ -12,7 +12,7 @@ RUN yarn config set network-concurrency 1 && \
     yarn config set network-timeout 100000
 
 RUN mkdir -p /var/cache/nginx /var/log/nginx /run && \
-    chmod -R 777 /var/cache/nginx /var/log/nginx /run
+    chmod -R 777 /var/cache/nginx /var/log/nginx /run /usr/share/nginx/html/
 
 WORKDIR /usr/src/app
 
@@ -23,7 +23,8 @@ COPY . .
 
 RUN yarn build
 
-RUN cp -r dist /usr/share/nginx/html
+COPY dist /usr/share/nginx/html
+
 COPY entrypoint.sh /usr/share/nginx/html/entrypoint.sh
 
 USER 1001
