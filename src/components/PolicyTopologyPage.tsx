@@ -7,8 +7,7 @@ import {
   Card,
   CardTitle,
   CardBody,
-  TextContent,
-  Text,
+  Content,
   Toolbar,
   ToolbarContent,
   ToolbarFilter,
@@ -575,20 +574,18 @@ const PolicyTopologyPage: React.FC = () => {
         <title>Policy Topology</title>
       </Helmet>
       <Page>
-        <PageSection variant="light">
+        <PageSection hasBodyWrapper={false}>
           <Title headingLevel="h1">Policy Topology</Title>
         </PageSection>
-        <PageSection className="policy-topology-section">
+        <PageSection hasBodyWrapper={false} className="policy-topology-section">
           <Card>
             <CardTitle>Topology View</CardTitle>
             <CardBody>
-              <TextContent>
-                <Text component="p" className="pf-u-mb-md">
-                  {t(
-                    'This view visualizes the relationships and interactions between different resources within your cluster related to Kuadrant, allowing you to explore connections between Gateways, HTTPRoutes and Kuadrant Policies.',
-                  )}
-                </Text>
-              </TextContent>
+              <Content component="p" className="pf-u-mb-md">
+                {t(
+                  'This view visualizes the relationships and interactions between different resources within your cluster related to Kuadrant, allowing you to explore connections between Gateways, HTTPRoutes and Kuadrant Policies.',
+                )}
+              </Content>
 
               <Toolbar
                 id="resource-filter-toolbar"
@@ -598,12 +595,12 @@ const PolicyTopologyPage: React.FC = () => {
                 clearFiltersButtonText={t('Reset Filters')}
               >
                 <ToolbarContent>
-                  <ToolbarItem variant="chip-group">
+                  <ToolbarItem variant="label-group">
                     <ToolbarFilter
                       categoryName="Resource"
-                      chips={selectedResourceTypes}
-                      deleteChip={onDeleteResourceFilter}
-                      deleteChipGroup={onDeleteResourceGroup}
+                      labels={selectedResourceTypes}
+                      deleteLabel={onDeleteResourceFilter}
+                      deleteLabelGroup={onDeleteResourceGroup}
                     >
                       <Select
                         aria-label="Resource filter"

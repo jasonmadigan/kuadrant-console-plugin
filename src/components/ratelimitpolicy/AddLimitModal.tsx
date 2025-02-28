@@ -1,12 +1,14 @@
 import {
-  FormGroup,
-  FormSelect,
-  FormSelectOption,
-  Modal,
-  TextInput,
-  Wizard,
-  WizardStep,
+	FormGroup,
+	FormSelect,
+	FormSelectOption,
+	TextInput,
+	Wizard,
+	WizardStep
 } from '@patternfly/react-core';
+import {
+	Modal
+} from '@patternfly/react-core/deprecated';
 import * as React from 'react';
 import { LimitConfig } from './types';
 import { useTranslation } from 'react-i18next';

@@ -1,14 +1,16 @@
 import * as React from 'react';
 import Helmet from 'react-helmet';
 import {
-  Button,
-  Modal,
-  ModalBox,
-  ModalBoxHeader,
-  ModalBoxBody,
-  ModalBoxFooter,
-  ButtonVariant,
+	Button,
+	ButtonVariant
 } from '@patternfly/react-core';
+import {
+	Modal,
+	ModalBox,
+	ModalBoxHeader,
+	ModalBoxBody,
+	ModalBoxFooter
+} from '@patternfly/react-core/deprecated';
 import { useTranslation } from 'react-i18next';
 import { ResourceYAMLEditor, useActiveNamespace } from '@openshift-console/dynamic-plugin-sdk';
 import resourceGVKMapping from '../utils/latest';

@@ -3,7 +3,7 @@
 .console-plugin-template__nice {
   /* Use PF global vars for colors to support dark mode in OpenShift 4.11.
    * https://patternfly-react-main.surge.sh/developer-resources/global-css-variables */
-  color: var(--pf-global--palette--blue-400);
+  color: #06c;
 }
 
 .policy-node .pf-topology__node__background {
@@ -11,7 +11,7 @@
   stroke-width: 1;
   stroke: var(--pf-topology__edge--Stroke);
   animation: dash-animation 2s linear infinite;
-  fill: var(--pf-global--palette--blue-100);
+  fill: #bee1f4;
 }
 
 .pf-theme-dark .policy-node .pf-topology__node__background {

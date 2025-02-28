@@ -4,7 +4,6 @@ import {
   Alert,
   AlertGroup,
   EmptyState,
-  EmptyStateIcon,
   EmptyStateBody,
   Title,
 } from '@patternfly/react-core';
@@ -160,11 +159,9 @@ const AssociatedResourceList: React.FC<AssociatedResourceListProps> = ({ resourc
         </AlertGroup>
       )}
       {allAssociatedResources.length === 0 && allLoaded ? (
-        <EmptyState>
-          <EmptyStateIcon icon={SearchIcon} />
-          <Title headingLevel="h4" size="lg">
+        <EmptyState titleText={<Title headingLevel="h4" size="lg">
             {t('No associated resources found')}
-          </Title>
+          </Title>} icon={SearchIcon}>
           <EmptyStateBody>{t('No associated policies found')}</EmptyStateBody>
         </EmptyState>
       ) : (

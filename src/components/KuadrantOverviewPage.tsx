@@ -13,8 +13,8 @@ import {
   CardHeader,
   Flex,
   FlexItem,
-  Text,
-  TextVariants,
+  Content,
+  ContentVariants,
   Stack,
   StackItem,
   Divider,
@@ -171,7 +171,7 @@ const KuadrantOverviewPage: React.FC = () => {
         <title data-test="example-page-title">{t('Kuadrant')}</title>
       </Helmet>
       <Page>
-        <PageSection isFilled>
+        <PageSection hasBodyWrapper={false} isFilled>
           <Title headingLevel="h1">{t('Kuadrant')} Overview</Title>
           <br />
 
@@ -195,24 +195,24 @@ const KuadrantOverviewPage: React.FC = () => {
                       <Title headingLevel="h4" className="kuadrant-dashboard-learning">
                         <GlobeIcon /> {t('Learning Resources')}
                       </Title>
-                      <Text component={TextVariants.small}>
+                      <Content component={ContentVariants.small}>
                         {t(
                           'Learn how to create, import and use Kuadrant policies on OpenShift with step-by-step instructions and tasks.',
                         )}
-                      </Text>
+                      </Content>
                       <Stack hasGutter className="pf-u-mt-sm">
                         <StackItem>
-                          <Text
+                          <Content
                             component="a"
                             href={EXTERNAL_LINKS.documentation}
                             className="kuadrant-dashboard-resource-link"
                             target="_blank"
                           >
                             {t('View Documentation')} <ExternalLinkAltIcon />
-                          </Text>
+                          </Content>
                         </StackItem>
                         <StackItem>
-                          <Text
+                          <Content
                             component="a"
                             href={EXTERNAL_LINKS.secureConnectProtect}
                             className="kuadrant-dashboard-resource-link"
@@ -220,7 +220,7 @@ const KuadrantOverviewPage: React.FC = () => {
                           >
                             {t('Configuring and deploying Gateway policies with Kuadrant')}{' '}
                             <ExternalLinkAltIcon />
-                          </Text>
+                          </Content>
                         </StackItem>
                       </Stack>
                     </FlexItem>
@@ -229,21 +229,21 @@ const KuadrantOverviewPage: React.FC = () => {
                       <Title headingLevel="h4" className="kuadrant-dashboard-feature-highlights">
                         <OptimizeIcon /> {t('Feature Highlights')}
                       </Title>
-                      <Text component={TextVariants.small}>
+                      <Content component={ContentVariants.small}>
                         {t(
                           'Read about the latest information and key features in the Kuadrant highlights.',
                         )}
-                      </Text>
+                      </Content>
                       <Stack hasGutter className="pf-u-mt-md">
                         <StackItem>
-                          <Text
+                          <Content
                             target="_blank"
                             component="a"
                             href={EXTERNAL_LINKS.releaseNotes}
                             className="kuadrant-dashboard-resource-link"
                           >
                             {t('Kuadrant')} {t('Release Notes')} <ExternalLinkAltIcon />
-                          </Text>
+                          </Content>
                         </StackItem>
                       </Stack>
                     </FlexItem>
@@ -252,30 +252,30 @@ const KuadrantOverviewPage: React.FC = () => {
                       <Title headingLevel="h4" className="kuadrant-dashboard-enhance">
                         <ReplicatorIcon /> {t('Enhance Your Work')}
                       </Title>
-                      <Text component={TextVariants.small}>
+                      <Content component={ContentVariants.small}>
                         {t(
                           'Ease operational complexity with API management and App Connectivity by using additional Operators and tools.',
                         )}
-                      </Text>
+                      </Content>
                       <Stack hasGutter className="pf-u-mt-md">
                         <StackItem>
-                          <Text
+                          <Content
                             component="a"
                             href={INTERNAL_LINKS.observabilitySetup}
                             className="kuadrant-dashboard-resource-link"
                             target="_blank"
                           >
                             Observability for {t('Kuadrant')} <ExternalLinkAltIcon />
-                          </Text>
+                          </Content>
                         </StackItem>
                         <StackItem>
-                          <Text
+                          <Content
                             component="a"
                             href={INTERNAL_LINKS.certManagerOperator(activeNamespace)}
                             className="kuadrant-dashboard-resource-link"
                           >
                             {t('cert-manager Operator')} <ExternalLinkAltIcon />
-                          </Text>
+                          </Content>
                         </StackItem>
                       </Stack>
                     </FlexItem>

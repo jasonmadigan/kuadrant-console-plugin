@@ -1,15 +1,19 @@
 import * as React from 'react';
 import { EllipsisVIcon } from '@patternfly/react-icons';
 import {
-  Dropdown,
-  DropdownItem,
-  DropdownList,
-  MenuToggle,
-  MenuToggleElement,
-  Button,
-  ButtonVariant,
+	Dropdown,
+	DropdownItem,
+	DropdownList,
+	MenuToggle,
+	MenuToggleElement,
+	Button,
+	ButtonVariant,
+	Modal /* data-codemods */,
+	ModalBody /* data-codemods */,
+	ModalFooter /* data-codemods */,
+	ModalHeader /* data-codemods */
 } from '@patternfly/react-core';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from '@patternfly/react-core/next';
+
 import { k8sDelete, K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 import getModelFromResource from '../utils/getModelFromResource'; // Assume you have a utility for getting the model from the resource
 type DropdownWithKebabProps = {

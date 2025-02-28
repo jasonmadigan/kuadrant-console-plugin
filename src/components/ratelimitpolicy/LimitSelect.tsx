@@ -1,4 +1,13 @@
-import { FormGroup, Title, Button, Modal, Label, LabelGroup } from '@patternfly/react-core';
+import {
+	FormGroup,
+	Title,
+	Button,
+	Label,
+	LabelGroup
+} from '@patternfly/react-core';
+import {
+	Modal
+} from '@patternfly/react-core/deprecated';
 import * as React from 'react';
 import AddLimitModal from './AddLimitModal';
 import { LimitConfig } from './types';

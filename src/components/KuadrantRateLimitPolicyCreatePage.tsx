@@ -1,14 +1,16 @@
 import * as React from 'react';
 import Helmet from 'react-helmet';
 import {
-  Button,
-  ButtonVariant,
-  Modal,
-  ModalBox,
-  ModalBoxHeader,
-  ModalBoxBody,
-  ModalBoxFooter,
+	Button,
+	ButtonVariant
 } from '@patternfly/react-core';
+import {
+	Modal,
+	ModalBox,
+	ModalBoxHeader,
+	ModalBoxBody,
+	ModalBoxFooter
+} from '@patternfly/react-core/deprecated';
 
 import { useTranslation } from 'react-i18next';
 import './kuadrant.css';
