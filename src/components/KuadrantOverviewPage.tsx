@@ -563,10 +563,10 @@ const KuadrantOverviewPage: React.FC = () => {
           <title data-test="example-page-title">{t('Kuadrant')}</title>
         </Helmet>
         <PageSection>
-          <Title headingLevel="h1">{t('Kuadrant')} Overview</Title>
+          <Title headingLevel="h1" className="pf-u-mb-lg">{t('Kuadrant')} Overview</Title>
 
             {!hideCard && (
-              <Card id="expandable-card" isExpanded={isExpanded}>
+              <Card id="expandable-card" isExpanded={isExpanded} className="pf-u-mb-lg">
                 <CardHeader
                   actions={{ actions: headerActions }}
                   onExpand={() => setIsExpanded(!isExpanded)}
@@ -675,7 +675,7 @@ const KuadrantOverviewPage: React.FC = () => {
               </Card>
             )}
 
-            <Card className="pf-u-mt-xl">
+            <Card className="pf-u-mt-xl pf-u-mb-lg">
                   {/* TODO: Loading placeholder */}
                   <CardTitle>
                     <Title headingLevel="h2">{t('Gateways')}</Title>
@@ -748,7 +748,7 @@ const KuadrantOverviewPage: React.FC = () => {
             </Card>
 
             {resourceRBAC['Gateway']?.list ? (
-              <Card className="pf-u-mt-xl">
+              <Card className="pf-u-mt-xl pf-u-mb-lg">
                     <CardTitle>
                       <Title headingLevel="h2">{t('Gateways - Traffic Analysis')}</Title>
                       {resourceRBAC['Gateway']?.create ? (
@@ -780,7 +780,7 @@ const KuadrantOverviewPage: React.FC = () => {
                     </CardBody>
               </Card>
             ) : (
-              <Card className="pf-u-mt-xl">
+              <Card className="pf-u-mt-xl pf-u-mb-lg">
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('Gateways')}</Title>
@@ -806,7 +806,7 @@ const KuadrantOverviewPage: React.FC = () => {
             )}
 
             {policyRBACNill ? (
-              <Card className="pf-u-mt-xl">
+              <Card className="pf-u-mt-xl pf-u-mb-lg">
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('Policies')}</Title>
@@ -830,7 +830,7 @@ const KuadrantOverviewPage: React.FC = () => {
                     </CardBody>
               </Card>
             ) : (
-              <Card className="pf-u-mt-xl">
+              <Card className="pf-u-mt-xl pf-u-mb-lg">
                     <CardTitle>
                       <Title headingLevel="h2">{t('Policies')}</Title>
                       <Dropdown
@@ -887,7 +887,7 @@ const KuadrantOverviewPage: React.FC = () => {
             )}
 
             {resourceRBAC['HTTPRoute']?.list ? (
-              <Card className="pf-u-mt-xl">
+              <Card className="pf-u-mt-xl pf-u-mb-lg">
                     <CardTitle>
                       <Title headingLevel="h2">{t('HTTPRoutes')}</Title>
                       {resourceRBAC['HTTPRoute']?.create ? (
@@ -918,7 +918,7 @@ const KuadrantOverviewPage: React.FC = () => {
                     </CardBody>
               </Card>
             ) : (
-              <Card className="pf-u-mt-xl">
+              <Card className="pf-u-mt-xl pf-u-mb-lg">
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('HTTPRoutes')}</Title>

@@ -303,7 +303,8 @@ const CustomNode: React.FC<any> = ({
       <g transform={`translate(${nodeWidth / 2}, ${paddingTop})`}>
         <foreignObject width={iconSize} height={iconSize} x={-iconSize / 2}>
           <IconComponent
-            style={{ color: '#393F44', width: `${iconSize}px`, height: `${iconSize}px` }}
+            className="kuadrant-topology-node-icon"
+            style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
           />
         </foreignObject>
       </g>
@@ -313,7 +314,6 @@ const CustomNode: React.FC<any> = ({
           style={{
             fontWeight: 'bold',
             fontSize: '12px',
-            fill: '#000',
             textAnchor: 'middle',
           }}
           dominantBaseline="central"
@@ -394,6 +394,7 @@ const PolicyTopologyPage: React.FC = () => {
   // Resource filter state. On initial render, show only resources in showByDefault
   const [selectedResourceTypes, setSelectedResourceTypes] = React.useState<string[]>([]);
   const [isResourceFilterOpen, setIsResourceFilterOpen] = React.useState(false);
+  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
 
   const onResourceSelect = (
@@ -551,16 +552,33 @@ const PolicyTopologyPage: React.FC = () => {
               },
             };
 
-            // Store current view state before updating
-            const currentScale = controllerRef.current.getGraph().getScale();
-            const currentPosition = controllerRef.current.getGraph().getPosition();
-            
-            controllerRef.current.fromModel(newModel, false);
-            controllerRef.current.getGraph().layout();
-            
-            // Restore view state instead of fitting
-            controllerRef.current.getGraph().setScale(currentScale);
-            controllerRef.current.getGraph().setPosition(currentPosition);
+            if (isInitialLoad && finalNodes.length > 0) {
+              // First load with actual content
+              controllerRef.current.fromModel(newModel, false);
+              controllerRef.current.getGraph().layout();
+              
+              // Fit to screen after a short delay
+              setTimeout(() => {
+                if (controllerRef.current) {
+                  controllerRef.current.getGraph().fit(80);
+                }
+              }, 100);
+              setIsInitialLoad(false);
+            } else if (!isInitialLoad && finalNodes.length > 0) {
+              // Subsequent updates - preserve view state
+              const currentScale = controllerRef.current.getGraph().getScale();
+              const currentPosition = controllerRef.current.getGraph().getPosition();
+              
+              controllerRef.current.fromModel(newModel, false);
+              controllerRef.current.getGraph().layout();
+              
+              // Immediately restore view state
+              controllerRef.current.getGraph().setScale(currentScale);
+              controllerRef.current.getGraph().setPosition(currentPosition);
+            } else {
+              // No nodes yet - just set the model
+              controllerRef.current.fromModel(newModel, false);
+            }
           }
         } catch (error) {
           setParseError('Failed to parse topology data.');

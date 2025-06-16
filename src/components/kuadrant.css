@@ -8,15 +8,28 @@
 
 .policy-node .pf-topology__node__background {
   stroke-dasharray: 5, 5;
-  stroke-width: 1;
-  stroke: var(--pf-topology__edge--Stroke);
+  stroke-width: 2;
+  stroke: #0066cc;
   animation: dash-animation 2s linear infinite;
-  fill: var(--pf-v6-global--palette--blue-100);
+  fill: #bee1f4;
+  fill-opacity: 0.5;
 }
 
-.pf-theme-dark .policy-node .pf-topology__node__background {
-  fill-opacity: 0.3;
-  stroke: var(--pf-v6-global--palette--white);
+.pf-theme-dark .policy-node .pf-topology__node__background,
+.pf-v6-theme-dark .policy-node .pf-topology__node__background {
+  fill: #1f4173;
+  fill-opacity: 0.5;
+  stroke: #73bcf7;
+  stroke-dasharray: 5, 5;
+  stroke-width: 2;
+  animation: dash-animation 2s linear infinite;
+}
+
+/* Ensure dashed borders are visible */
+.kuadrant-policy-topology .policy-node .pf-topology__node__background {
+  stroke-dasharray: 5, 5 !important;
+  stroke-width: 2 !important;
+  animation: dash-animation 2s linear infinite !important;
 }
 
 @keyframes dash-animation {
@@ -25,17 +38,47 @@
   }
 }
 
-.pf-theme-light .pf-topology__node .kuadrant-topology-type-text {
-  fill: var(--pf-v6-global--palette--black-900) !important;
+/* Dark theme - white text for all topology elements */
+.pf-v6-theme-dark .kuadrant-policy-topology svg text,
+.pf-theme-dark .kuadrant-policy-topology svg text {
+  fill: #ffffff !important;
 }
 
-.pf-theme-dark .pf-topology__node .kuadrant-topology-type-text {
-  fill: var(--pf-v6-global--palette--white) !important;
+/* Light theme - dark text for all topology elements */
+.pf-v6-theme-light .kuadrant-policy-topology svg text,
+.pf-theme-light .kuadrant-policy-topology svg text {
+  fill: #151515 !important;
 }
 
+/* Default to dark text when no theme class */
+.kuadrant-policy-topology svg text {
+  fill: #151515;
+}
+
+/* Override for dark theme to ensure white text */
+.pf-v6-theme-dark .kuadrant-policy-topology svg text {
+  fill: #ffffff !important;
+}
+
+/* Badge text should always be white */
 .kuadrant-policy-topology .pf-topology__node__label__badge > text {
-  fill: var(--pf-v6-global--palette--white);
+  fill: #ffffff !important;
 }
+
+/* Icons in dark theme */
+.pf-v6-theme-dark .kuadrant-policy-topology .kuadrant-topology-node-icon,
+.pf-theme-dark .kuadrant-policy-topology .kuadrant-topology-node-icon {
+  color: #d2d2d2 !important;
+  fill: #d2d2d2 !important;
+}
+
+/* Icons in light theme */
+.pf-v6-theme-light .kuadrant-policy-topology .kuadrant-topology-node-icon,
+.pf-theme-light .kuadrant-policy-topology .kuadrant-topology-node-icon {
+  color: #6a6e73 !important;
+  fill: #6a6e73 !important;
+}
+
 
 .kuadrant-page-title {
   padding: 1.5rem;
