@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import Helmet from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import {
-  Page,
   PageSection,
   Title,
   Card,
@@ -13,8 +12,8 @@ import {
   CardHeader,
   Flex,
   FlexItem,
-  Text,
-  TextVariants,
+  Content,
+  ContentVariants,
   Stack,
   StackItem,
   Divider,
@@ -25,7 +24,6 @@ import {
   Button,
   Bullseye,
   EmptyState,
-  EmptyStateIcon,
   EmptyStateBody,
   Label,
   Popover,
@@ -426,9 +424,9 @@ const KuadrantOverviewPage: React.FC = () => {
         headerContent={`Error Code`}
         bodyContent={
           <>
-            <Text component={TextVariants.p}>
+            <Content component={ContentVariants.p}>
               {t('Displays the distribution of error codes for request failures.')}
-            </Text>
+            </Content>
             <div className="popover-codes">
               {distribution.map(([code, dist]) => {
                 lastCode = code;
@@ -564,10 +562,8 @@ const KuadrantOverviewPage: React.FC = () => {
         <Helmet>
           <title data-test="example-page-title">{t('Kuadrant')}</title>
         </Helmet>
-        <Page>
-          <PageSection isFilled>
-            <Title headingLevel="h1">{t('Kuadrant')} Overview</Title>
-            <br />
+        <PageSection>
+          <Title headingLevel="h1">{t('Kuadrant')} Overview</Title>
 
             {!hideCard && (
               <Card id="expandable-card" isExpanded={isExpanded}>
@@ -589,24 +585,24 @@ const KuadrantOverviewPage: React.FC = () => {
                         <Title headingLevel="h4" className="kuadrant-dashboard-learning">
                           <GlobeIcon /> {t('Learning Resources')}
                         </Title>
-                        <Text component={TextVariants.small}>
+                        <Content component={ContentVariants.small}>
                           {t(
                             'Learn how to create, import and use Kuadrant policies on OpenShift with step-by-step instructions and tasks.',
                           )}
-                        </Text>
+                        </Content>
                         <Stack hasGutter className="pf-u-mt-sm">
                           <StackItem>
-                            <Text
+                            <Content
                               component="a"
                               href={EXTERNAL_LINKS.documentation}
                               className="kuadrant-dashboard-resource-link"
                               target="_blank"
                             >
                               {t('View Documentation')} <ExternalLinkAltIcon />
-                            </Text>
+                            </Content>
                           </StackItem>
                           <StackItem>
-                            <Text
+                            <Content
                               component="a"
                               href={EXTERNAL_LINKS.secureConnectProtect}
                               className="kuadrant-dashboard-resource-link"
@@ -614,7 +610,7 @@ const KuadrantOverviewPage: React.FC = () => {
                             >
                               {t('Configuring and deploying Gateway policies with Kuadrant')}{' '}
                               <ExternalLinkAltIcon />
-                            </Text>
+                            </Content>
                           </StackItem>
                         </Stack>
                       </FlexItem>
@@ -623,21 +619,21 @@ const KuadrantOverviewPage: React.FC = () => {
                         <Title headingLevel="h4" className="kuadrant-dashboard-feature-highlights">
                           <OptimizeIcon /> {t('Feature Highlights')}
                         </Title>
-                        <Text component={TextVariants.small}>
+                        <Content component={ContentVariants.small}>
                           {t(
                             'Read about the latest information and key features in the Kuadrant highlights.',
                           )}
-                        </Text>
+                        </Content>
                         <Stack hasGutter className="pf-u-mt-md">
                           <StackItem>
-                            <Text
+                            <Content
                               target="_blank"
                               component="a"
                               href={EXTERNAL_LINKS.releaseNotes}
                               className="kuadrant-dashboard-resource-link"
                             >
                               {t('Kuadrant')} {t('Release Notes')} <ExternalLinkAltIcon />
-                            </Text>
+                            </Content>
                           </StackItem>
                         </Stack>
                       </FlexItem>
@@ -646,30 +642,30 @@ const KuadrantOverviewPage: React.FC = () => {
                         <Title headingLevel="h4" className="kuadrant-dashboard-enhance">
                           <ReplicatorIcon /> {t('Enhance Your Work')}
                         </Title>
-                        <Text component={TextVariants.small}>
+                        <Content component={ContentVariants.small}>
                           {t(
                             'Ease operational complexity with API management and App Connectivity by using additional Operators and tools.',
                           )}
-                        </Text>
+                        </Content>
                         <Stack hasGutter className="pf-u-mt-md">
                           <StackItem>
-                            <Text
+                            <Content
                               component="a"
                               href={INTERNAL_LINKS.observabilitySetup}
                               className="kuadrant-dashboard-resource-link"
                               target="_blank"
                             >
                               Observability for {t('Kuadrant')} <ExternalLinkAltIcon />
-                            </Text>
+                            </Content>
                           </StackItem>
                           <StackItem>
-                            <Text
+                            <Content
                               component="a"
                               href={INTERNAL_LINKS.certManagerOperator(activeNamespace)}
                               className="kuadrant-dashboard-resource-link"
                             >
                               {t('cert-manager Operator')} <ExternalLinkAltIcon />
-                            </Text>
+                            </Content>
                           </StackItem>
                         </Stack>
                       </FlexItem>
@@ -679,9 +675,7 @@ const KuadrantOverviewPage: React.FC = () => {
               </Card>
             )}
 
-            <Flex className="pf-u-mt-xl">
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <Card>
+            <Card className="pf-u-mt-xl">
                   {/* TODO: Loading placeholder */}
                   <CardTitle>
                     <Title headingLevel="h2">{t('Gateways')}</Title>
@@ -751,14 +745,10 @@ const KuadrantOverviewPage: React.FC = () => {
                       </Flex>
                     </CardBody>
                   </CardTitle>
-                </Card>
-              </FlexItem>
-            </Flex>
+            </Card>
 
-            <Flex className="pf-u-mt-xl">
-              {resourceRBAC['Gateway']?.list ? (
-                <FlexItem flex={{ default: 'flex_1' }}>
-                  <Card>
+            {resourceRBAC['Gateway']?.list ? (
+              <Card className="pf-u-mt-xl">
                     <CardTitle>
                       <Title headingLevel="h2">{t('Gateways - Traffic Analysis')}</Title>
                       {resourceRBAC['Gateway']?.create ? (
@@ -788,61 +778,59 @@ const KuadrantOverviewPage: React.FC = () => {
                         emtpyResourceName="Gateways"
                       />
                     </CardBody>
-                  </Card>
-                </FlexItem>
-              ) : (
-                <FlexItem flex={{ default: 'flex_1' }}>
-                  <Card>
+              </Card>
+            ) : (
+              <Card className="pf-u-mt-xl">
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('Gateways')}</Title>
                       </CardTitle>
                       <Bullseye>
-                        <EmptyState>
-                          <EmptyStateIcon icon={LockIcon} />
-                          <Title headingLevel="h4" size="lg">
-                            {t('Access Denied')}
-                          </Title>
+                        <EmptyState
+                          titleText={
+                            <Title headingLevel="h4" size="lg">
+                              {t('Access Denied')}
+                            </Title>
+                          }
+                          icon={LockIcon}
+                        >
                           <EmptyStateBody>
-                            <Text component="p">
+                            <Content component="p">
                               {t('You do not have permission to view Gateways')}
-                            </Text>
+                            </Content>
                           </EmptyStateBody>
                         </EmptyState>
                       </Bullseye>
                     </CardBody>
-                  </Card>
-                </FlexItem>
-              )}
-            </Flex>
+              </Card>
+            )}
 
-            <Flex className="pf-u-mt-xl">
-              {policyRBACNill ? (
-                <FlexItem flex={{ default: 'flex_1' }}>
-                  <Card>
+            {policyRBACNill ? (
+              <Card className="pf-u-mt-xl">
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('Policies')}</Title>
                       </CardTitle>
                       <Bullseye>
-                        <EmptyState>
-                          <EmptyStateIcon icon={LockIcon} />
-                          <Title headingLevel="h4" size="lg">
-                            {t('Access Denied')}
-                          </Title>
+                        <EmptyState
+                          titleText={
+                            <Title headingLevel="h4" size="lg">
+                              {t('Access Denied')}
+                            </Title>
+                          }
+                          icon={LockIcon}
+                        >
                           <EmptyStateBody>
-                            <Text component="p">
+                            <Content component="p">
                               {t('You do not have permission to view Policies')}
-                            </Text>
+                            </Content>
                           </EmptyStateBody>
                         </EmptyState>
                       </Bullseye>
                     </CardBody>
-                  </Card>
-                </FlexItem>
-              ) : (
-                <FlexItem flex={{ default: 'flex_1' }}>
-                  <Card>
+              </Card>
+            ) : (
+              <Card className="pf-u-mt-xl">
                     <CardTitle>
                       <Title headingLevel="h2">{t('Policies')}</Title>
                       <Dropdown
@@ -861,7 +849,7 @@ const KuadrantOverviewPage: React.FC = () => {
                           </MenuToggle>
                         )}
                       >
-                        <DropdownList class="kuadrant-overview-create-list pf-u-p-0">
+                        <DropdownList className="kuadrant-overview-create-list pf-u-p-0">
                           {policies.map((policy) => {
                             const canCreate = resourceRBAC[policy]?.create;
                             return canCreate ? (
@@ -895,13 +883,11 @@ const KuadrantOverviewPage: React.FC = () => {
                         paginationLimit={5}
                       />
                     </CardBody>
-                  </Card>
-                </FlexItem>
-              )}
+              </Card>
+            )}
 
-              {resourceRBAC['HTTPRoute']?.list ? (
-                <FlexItem flex={{ default: 'flex_1' }}>
-                  <Card>
+            {resourceRBAC['HTTPRoute']?.list ? (
+              <Card className="pf-u-mt-xl">
                     <CardTitle>
                       <Title headingLevel="h2">{t('HTTPRoutes')}</Title>
                       {resourceRBAC['HTTPRoute']?.create ? (
@@ -930,35 +916,33 @@ const KuadrantOverviewPage: React.FC = () => {
                         emtpyResourceName="HTTPRoutes"
                       />
                     </CardBody>
-                  </Card>
-                </FlexItem>
-              ) : (
-                <FlexItem flex={{ default: 'flex_1' }}>
-                  <Card>
+              </Card>
+            ) : (
+              <Card className="pf-u-mt-xl">
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('HTTPRoutes')}</Title>
                       </CardTitle>
                       <Bullseye>
-                        <EmptyState>
-                          <EmptyStateIcon icon={LockIcon} />
-                          <Title headingLevel="h4" size="lg">
-                            {t('Access Denied')}
-                          </Title>
+                        <EmptyState
+                          titleText={
+                            <Title headingLevel="h4" size="lg">
+                              {t('Access Denied')}
+                            </Title>
+                          }
+                          icon={LockIcon}
+                        >
                           <EmptyStateBody>
-                            <Text component="p">
+                            <Content component="p">
                               {t('You do not have permission to view HTTPRoutes')}
-                            </Text>
+                            </Content>
                           </EmptyStateBody>
                         </EmptyState>
                       </Bullseye>
                     </CardBody>
-                  </Card>
-                </FlexItem>
-              )}
-            </Flex>
-          </PageSection>
-        </Page>
+              </Card>
+            )}
+        </PageSection>
       </>
     );
 };

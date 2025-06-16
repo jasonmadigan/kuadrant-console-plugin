@@ -3,7 +3,7 @@
 .console-plugin-template__nice {
   /* Use PF global vars for colors to support dark mode in OpenShift 4.11.
    * https://patternfly-react-main.surge.sh/developer-resources/global-css-variables */
-  color: var(--pf-global--palette--blue-400);
+  color: var(--pf-v6-global--palette--blue-400);
 }
 
 .policy-node .pf-topology__node__background {
@@ -11,12 +11,12 @@
   stroke-width: 1;
   stroke: var(--pf-topology__edge--Stroke);
   animation: dash-animation 2s linear infinite;
-  fill: var(--pf-global--palette--blue-100);
+  fill: var(--pf-v6-global--palette--blue-100);
 }
 
 .pf-theme-dark .policy-node .pf-topology__node__background {
   fill-opacity: 0.3;
-  stroke: var(--pf-global--palette--white);
+  stroke: var(--pf-v6-global--palette--white);
 }
 
 @keyframes dash-animation {
@@ -26,15 +26,15 @@
 }
 
 .pf-theme-light .pf-topology__node .kuadrant-topology-type-text {
-  fill: var(--pf-global--palette--black-900) !important;
+  fill: var(--pf-v6-global--palette--black-900) !important;
 }
 
 .pf-theme-dark .pf-topology__node .kuadrant-topology-type-text {
-  fill: var(--pf-global--palette--white) !important;
+  fill: var(--pf-v6-global--palette--white) !important;
 }
 
 .kuadrant-policy-topology .pf-topology__node__label__badge > text {
-  fill: var(--pf-global--palette--white);
+  fill: var(--pf-v6-global--palette--white);
 }
 
 .kuadrant-page-title {
@@ -51,12 +51,12 @@
 
 .kuadrant-editor-toggle {
   display: flex;
-  padding: var(--pf-v5-global--spacer--sm) 1.5rem var(--pf-v5-global--spacer--sm) 1.5rem;
-  border-bottom: var(--pf-v5-global--BorderWidth--sm) solid var(--pf-v5-global--BorderColor--100);
-  border-top: var(--pf-v5-global--BorderWidth--sm) solid var(--pf-v5-global--BorderColor--100);
+  padding: var(--pf-v6-global--spacer--sm) 1.5rem var(--pf-v6-global--spacer--sm) 1.5rem;
+  border-bottom: var(--pf-v6-global--BorderWidth--sm) solid var(--pf-v6-global--BorderColor--100);
+  border-top: var(--pf-v6-global--BorderWidth--sm) solid var(--pf-v6-global--BorderColor--100);
 }
 
-.kuadrant-editor-toggle .pf-v5-c-radio {
+.kuadrant-editor-toggle .pf-v6-c-radio {
   padding: 0 0 0 1rem;
 }
 
@@ -74,40 +74,40 @@
 }
 
 .kuadrant-overview-getting-started small {
-  color: var(--pf-v5-global--Color--200);
+  color: var(--pf-v6-global--Color--200);
 }
 
 .kuadrant-dashboard-learning {
-  color: var(--pf-global--palette--purple-700);
+  color: var(--pf-v6-global--palette--purple-700);
 }
 
 .pf-theme-dark .kuadrant-dashboard-learning {
-  color: var(--pf-v5-global--palette--purple-200);
+  color: var(--pf-v6-global--palette--purple-200);
 }
 
 .kuadrant-dashboard-feature-highlights {
-  color: var(--pf-global--palette--blue-300);
+  color: var(--pf-v6-global--palette--blue-300);
 }
 
 .kuadrant-dashboard-enhance {
-  color: var(--pf-global--palette--orange-400);
+  color: var(--pf-v6-global--palette--orange-400);
 }
 
 .kuadrant-dashboard-resource-link {
   text-decoration: none;
-  color: var(--pf-global--palette--black);
+  color: var(--pf-v6-global--palette--black);
   cursor: pointer;
   font-size: 0.8rem;
 }
 
 .kuadrant-dashboard-resource-link:hover {
   text-decoration: underline;
-  color: var(--pf-global--palette--blue-400);
+  color: var(--pf-v6-global--palette--blue-400);
 }
 
 .kuadrant-reading-time {
   font-size: 0.8rem;
-  color: var(--pf-global--palette--black-600);
+  color: var(--pf-v6-global--palette--black-600);
   margin-left: 1rem;
   margin-right: 1rem;
 }
@@ -117,7 +117,7 @@
 }
 
 .kuadrant-limits-button,
-.pf-v5-c-label-group {
+.pf-v6-c-label-group {
   margin: 1rem;
 }
 
@@ -155,7 +155,7 @@
   font-family: RedHatText, helvetica, arial, sans-serif;
 }
 
-.custom-rounded-popover .pf-v5-c-popover__content {
+.custom-rounded-popover .pf-v6-c-popover__content {
   border-radius: 12px;
 }
 

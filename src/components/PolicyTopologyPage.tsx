@@ -1,14 +1,12 @@
 import * as React from 'react';
 import Helmet from 'react-helmet';
 import {
-  Page,
   PageSection,
   Title,
   Card,
   CardTitle,
   CardBody,
-  TextContent,
-  Text,
+  Content,
   Toolbar,
   ToolbarContent,
   ToolbarFilter,
@@ -553,9 +551,16 @@ const PolicyTopologyPage: React.FC = () => {
               },
             };
 
+            // Store current view state before updating
+            const currentScale = controllerRef.current.getGraph().getScale();
+            const currentPosition = controllerRef.current.getGraph().getPosition();
+            
             controllerRef.current.fromModel(newModel, false);
             controllerRef.current.getGraph().layout();
-            controllerRef.current.getGraph().fit(80);
+            
+            // Restore view state instead of fitting
+            controllerRef.current.getGraph().setScale(currentScale);
+            controllerRef.current.getGraph().setPosition(currentPosition);
           }
         } catch (error) {
           setParseError('Failed to parse topology data.');
@@ -618,21 +623,18 @@ const PolicyTopologyPage: React.FC = () => {
       <Helmet>
         <title>{t('Policy Topology')}</title>
       </Helmet>
-      <Page>
-        <PageSection variant="light">
-          <Title headingLevel="h1">{t('Policy Topology')}</Title>
-        </PageSection>
-        <PageSection className="policy-topology-section">
+      <PageSection>
+        <Title headingLevel="h1">{t('Policy Topology')}</Title>
           <Card>
             <CardTitle>{t('Topology View')}</CardTitle>
             <CardBody>
-              <TextContent>
-                <Text component="p" className="pf-u-mb-md">
+              <Content>
+                <Content component="p" className="pf-u-mb-md">
                   {t(
                     'This view visualizes the relationships and interactions between different resources within your cluster related to Kuadrant, allowing you to explore connections between Gateways, HTTPRoutes and Kuadrant Policies.',
                   )}
-                </Text>
-              </TextContent>
+                </Content>
+              </Content>
               <Toolbar
                 id="resource-filter-toolbar"
                 className="pf-m-toggle-group-container"
@@ -641,12 +643,12 @@ const PolicyTopologyPage: React.FC = () => {
                 clearFiltersButtonText={t('Reset Filters')}
               >
                 <ToolbarContent>
-                  <ToolbarItem variant="chip-group">
+                  <ToolbarItem variant="label-group">
                     <ToolbarFilter
                       categoryName="Resource"
-                      chips={selectedResourceTypes}
-                      deleteChip={onDeleteResourceFilter}
-                      deleteChipGroup={onDeleteResourceGroup}
+                      labels={selectedResourceTypes}
+                      deleteLabel={onDeleteResourceFilter}
+                      deleteLabelGroup={onDeleteResourceGroup}
                     >
                       <Select
                         aria-label="Resource filter"
@@ -727,8 +729,7 @@ const PolicyTopologyPage: React.FC = () => {
               )}
             </CardBody>
           </Card>
-        </PageSection>
-      </Page>
+      </PageSection>
     </>
   );
 };
