@@ -30,6 +30,8 @@ import {
   Progress,
   ProgressMeasureLocation,
   Tooltip,
+  Grid,
+  GridItem,
 } from '@patternfly/react-core';
 import {
   GlobeIcon,
@@ -564,9 +566,10 @@ const KuadrantOverviewPage: React.FC = () => {
         </Helmet>
         <PageSection>
           <Title headingLevel="h1" className="pf-u-mb-lg">{t('Kuadrant')} Overview</Title>
-
+          <Grid hasGutter>
             {!hideCard && (
-              <Card id="expandable-card" isExpanded={isExpanded} className="pf-u-mb-lg">
+              <GridItem>
+                <Card id="expandable-card" isExpanded={isExpanded}>
                 <CardHeader
                   actions={{ actions: headerActions }}
                   onExpand={() => setIsExpanded(!isExpanded)}
@@ -673,9 +676,11 @@ const KuadrantOverviewPage: React.FC = () => {
                   </CardBody>
                 </CardExpandableContent>
               </Card>
+              </GridItem>
             )}
 
-            <Card className="pf-u-mt-xl pf-u-mb-lg">
+            <GridItem>
+              <Card>
                   {/* TODO: Loading placeholder */}
                   <CardTitle>
                     <Title headingLevel="h2">{t('Gateways')}</Title>
@@ -746,22 +751,24 @@ const KuadrantOverviewPage: React.FC = () => {
                     </CardBody>
                   </CardTitle>
             </Card>
+            </GridItem>
 
             {resourceRBAC['Gateway']?.list ? (
-              <Card className="pf-u-mt-xl pf-u-mb-lg">
-                    <CardTitle>
+              <GridItem>
+                <Card>
+                    <CardTitle className="kuadrant-resource-create-container">
                       <Title headingLevel="h2">{t('Gateways - Traffic Analysis')}</Title>
                       {resourceRBAC['Gateway']?.create ? (
                         <Button
                           onClick={() => handleCreateResource('Gateway')}
-                          className="kuadrant-overview-create-button pf-u-mt-md pf-u-mr-md"
+                          className="kuadrant-overview-create-button"
                         >
                           {t(`Create Gateway`)}
                         </Button>
                       ) : (
                         <Tooltip content="You do not have permission to create a Gateway">
                           <Button
-                            className="kuadrant-overview-create-button pf-u-mt-md pf-u-mr-md"
+                            className="kuadrant-overview-create-button"
                             isAriaDisabled
                           >
                             {t(`Create Gateway`)}
@@ -779,8 +786,10 @@ const KuadrantOverviewPage: React.FC = () => {
                       />
                     </CardBody>
               </Card>
+              </GridItem>
             ) : (
-              <Card className="pf-u-mt-xl pf-u-mb-lg">
+              <GridItem>
+                <Card>
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('Gateways')}</Title>
@@ -803,10 +812,12 @@ const KuadrantOverviewPage: React.FC = () => {
                       </Bullseye>
                     </CardBody>
               </Card>
+              </GridItem>
             )}
 
             {policyRBACNill ? (
-              <Card className="pf-u-mt-xl pf-u-mb-lg">
+              <GridItem>
+                <Card>
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('Policies')}</Title>
@@ -829,9 +840,11 @@ const KuadrantOverviewPage: React.FC = () => {
                       </Bullseye>
                     </CardBody>
               </Card>
+              </GridItem>
             ) : (
-              <Card className="pf-u-mt-xl pf-u-mb-lg">
-                    <CardTitle>
+              <GridItem>
+                <Card>
+                    <CardTitle className="kuadrant-resource-create-container">
                       <Title headingLevel="h2">{t('Policies')}</Title>
                       <Dropdown
                         isOpen={isCreateOpen}
@@ -843,7 +856,7 @@ const KuadrantOverviewPage: React.FC = () => {
                             onClick={onToggleClick}
                             isExpanded={isCreateOpen}
                             variant="primary"
-                            className="kuadrant-overview-create-button pf-u-mt-md pf-u-mr-md"
+                            className="kuadrant-overview-create-button"
                           >
                             {t('Create Policy')}
                           </MenuToggle>
@@ -884,23 +897,25 @@ const KuadrantOverviewPage: React.FC = () => {
                       />
                     </CardBody>
               </Card>
+              </GridItem>
             )}
 
             {resourceRBAC['HTTPRoute']?.list ? (
-              <Card className="pf-u-mt-xl pf-u-mb-lg">
-                    <CardTitle>
+              <GridItem>
+                <Card>
+                    <CardTitle className="kuadrant-resource-create-container">
                       <Title headingLevel="h2">{t('HTTPRoutes')}</Title>
                       {resourceRBAC['HTTPRoute']?.create ? (
                         <Button
                           onClick={() => handleCreateResource('HTTPRoute')}
-                          className="kuadrant-overview-create-button pf-u-mt-md pf-u-mr-md"
+                          className="kuadrant-overview-create-button"
                         >
                           {t(`Create HTTPRoute`)}
                         </Button>
                       ) : (
                         <Tooltip content="You do not have permission to create a HTTPRoute">
                           <Button
-                            className="kuadrant-overview-create-button pf-u-mt-md pf-u-mr-md"
+                            className="kuadrant-overview-create-button"
                             isAriaDisabled
                           >
                             {t(`Create HTTPRoute`)}
@@ -917,8 +932,10 @@ const KuadrantOverviewPage: React.FC = () => {
                       />
                     </CardBody>
               </Card>
+              </GridItem>
             ) : (
-              <Card className="pf-u-mt-xl pf-u-mb-lg">
+              <GridItem>
+                <Card>
                     <CardBody className="pf-u-p-10">
                       <CardTitle>
                         <Title headingLevel="h2">{t('HTTPRoutes')}</Title>
@@ -941,7 +958,9 @@ const KuadrantOverviewPage: React.FC = () => {
                       </Bullseye>
                     </CardBody>
               </Card>
+              </GridItem>
             )}
+          </Grid>
         </PageSection>
       </>
     );

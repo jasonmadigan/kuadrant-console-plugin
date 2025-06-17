@@ -187,6 +187,11 @@
   width: 100%;
 }
 
+/* Position card titles to contain absolute buttons */
+.pf-v6-c-card__title:has(.kuadrant-overview-create-button) {
+  position: relative;
+}
+
 .kuadrant-overview-create-button {
   position: absolute;
   top: 0;
