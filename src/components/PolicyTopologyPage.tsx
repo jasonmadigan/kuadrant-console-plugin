@@ -27,11 +27,6 @@ import { useVisualizationController } from '../hooks/useVisualizationController'
 import { useTopologyAccess } from '../hooks/useTopologyAccess';
 import { TopologyControls } from './topology/TopologyControls';
 
-let dynamicResourceGVKMapping: Record<string, GVK> = {};
-
-const goToResource = createGoToResource(dynamicResourceGVKMapping);
-const navigateToCreatePolicy = createNavigateToCreatePolicy(dynamicResourceGVKMapping);
-
 const PolicyTopologyPage: React.FC = () => {
   const [config, setConfig] = React.useState<any | null>(null);
   const [parseError, setParseError] = React.useState<string | null>(null);
@@ -41,6 +36,9 @@ const PolicyTopologyPage: React.FC = () => {
   const [selectedResourceTypes, setSelectedResourceTypes] = React.useState<string[]>([]);
   const [isInitialLoad, setIsInitialLoad] = React.useState(true);
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
+  
+  // Use ref for dynamic mapping so it can be updated after async load
+  const dynamicResourceGVKMapping = React.useRef<Record<string, GVK>>({});
 
   const onResourceSelect = (
     _event: React.MouseEvent | React.ChangeEvent | undefined,
@@ -85,12 +83,21 @@ const PolicyTopologyPage: React.FC = () => {
   React.useEffect(() => {
     getGroupVersionKindForKind(resourceHints)
       .then((mapping) => {
-        dynamicResourceGVKMapping = mapping; // used in goToResource
+        dynamicResourceGVKMapping.current = mapping; // used in goToResource
         console.debug('Prewarmed API resource mapping:', mapping);
       })
       .catch((err) => {
         console.error('Error prewarming API resource mapping:', err);
       });
+  }, []);
+
+  // Create navigation functions that use the dynamic mapping ref
+  const goToResource = React.useCallback((resourceType: string, resourceName: string) => {
+    createGoToResource(dynamicResourceGVKMapping.current)(resourceType, resourceName);
+  }, []);
+  
+  const navigateToCreatePolicy = React.useCallback((policyType: string) => {
+    createNavigateToCreatePolicy(dynamicResourceGVKMapping.current)(policyType);
   }, []);
 
   // Watch the ConfigMap named "topology" in the namespace provided by the config.js
@@ -110,7 +117,7 @@ const PolicyTopologyPage: React.FC = () => {
   const controller = useVisualizationController(
     goToResource,
     navigateToCreatePolicy,
-    dynamicResourceGVKMapping,
+    () => dynamicResourceGVKMapping.current,
   );
 
   const topologyData = useTopologyData(

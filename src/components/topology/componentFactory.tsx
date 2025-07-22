@@ -16,7 +16,7 @@ import { getPolicyConfigsForResource } from '../../utils/topology/navigationUtil
 interface ComponentFactoryProps {
   goToResource: (resourceType: string, resourceName: string) => void;
   navigateToCreatePolicy: (policyType: string) => void;
-  dynamicResourceGVKMapping: Record<string, any>;
+  getDynamicResourceGVKMapping: () => Record<string, any>;
 }
 
 /**
@@ -24,10 +24,10 @@ interface ComponentFactoryProps {
  */
 const getFilteredPolicyConfigs = (
   resourceType: string,
-  dynamicResourceGVKMapping: Record<string, any>,
+  getDynamicResourceGVKMapping: () => Record<string, any>,
 ): PolicyConfig[] =>
   (getPolicyConfigsForResource(resourceType) || []).filter(
-    (policy) => dynamicResourceGVKMapping[policy.key],
+    (policy) => getDynamicResourceGVKMapping()[policy.key],
   );
 
 /**
@@ -38,9 +38,9 @@ const createContextMenuItem = (
   resourceName: string,
   goToResource: (resourceType: string, resourceName: string) => void,
   navigateToCreatePolicy: (policyType: string) => void,
-  dynamicResourceGVKMapping: Record<string, any>,
+  getDynamicResourceGVKMapping: () => Record<string, any>,
 ) => {
-  const policyConfigs = getFilteredPolicyConfigs(resourceType, dynamicResourceGVKMapping);
+  const policyConfigs = getFilteredPolicyConfigs(resourceType, getDynamicResourceGVKMapping);
   return (
     <>
       <ContextMenuItem
@@ -67,7 +67,7 @@ const createContextMenuItem = (
 export const createComponentFactory = ({
   goToResource,
   navigateToCreatePolicy,
-  dynamicResourceGVKMapping,
+  getDynamicResourceGVKMapping,
 }: ComponentFactoryProps) => {
   const contextMenu = (element: any) => {
     const resourceType = element.getData().type;
@@ -78,7 +78,7 @@ export const createComponentFactory = ({
         resourceName,
         goToResource,
         navigateToCreatePolicy,
-        dynamicResourceGVKMapping,
+        getDynamicResourceGVKMapping,
       ),
     ];
   };

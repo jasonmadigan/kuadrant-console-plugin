@@ -10,30 +10,35 @@ import { createInitialModel } from '../utils/topology/graphManager';
 export const useVisualizationController = (
   goToResource: (resourceType: string, resourceName: string) => void,
   navigateToCreatePolicy: (policyType: string) => void,
-  dynamicResourceGVKMapping: Record<string, any>,
+  getDynamicResourceGVKMapping: () => Record<string, any>,
 ): Visualization | null => {
-  const controllerRef = React.useRef<Visualization | null>(null);
+  const [controller, setController] = React.useState<Visualization | null>(null);
+  const isInitialized = React.useRef(false);
 
   React.useEffect(() => {
-    if (!controllerRef.current) {
+    if (!isInitialized.current) {
       const initialModel = createInitialModel();
       const visualization = new Visualization();
       const componentFactory = createComponentFactory({
         goToResource,
         navigateToCreatePolicy,
-        dynamicResourceGVKMapping,
+        getDynamicResourceGVKMapping,
       });
       visualization.registerLayoutFactory(customLayoutFactory);
       visualization.registerComponentFactory(componentFactory);
       visualization.fromModel(initialModel, false);
-      controllerRef.current = visualization;
+      setController(visualization);
+      isInitialized.current = true;
     }
 
     // Cleanup on unmount
     return () => {
-      controllerRef.current = null;
+      if (isInitialized.current) {
+        setController(null);
+        isInitialized.current = false;
+      }
     };
-  }, [goToResource, navigateToCreatePolicy, dynamicResourceGVKMapping]);
+  }, []);
 
-  return controllerRef.current;
+  return controller;
 };
