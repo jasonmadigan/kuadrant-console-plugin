@@ -55,16 +55,23 @@ import * as dot from 'graphlib-dot';
 import './kuadrant.css';
 import NoPermissionsView from './NoPermissionsView';
 
-interface GVK {
-  group: string;
-  version: string;
-  kind: string;
-}
+import {
+  showByDefault,
+  resourceHints,
+  shapeMapping,
+  PolicyConfig,
+  unassociatedPolicies,
+  kuadrantInternals,
+  transitiveNodeTypes,
+} from '../utils/topology/topologyConstants';
+import { GVK, kindToAbbr, getGroupVersionKindForKind } from '../utils/topology/topologyUtils';
+import {
+  createGoToResource,
+  createNavigateToCreatePolicy,
+  getPolicyConfigsForResource,
+} from '../utils/topology/navigationUtils';
+
 let dynamicResourceGVKMapping: Record<string, GVK> = {};
-const resourceHints: Record<string, string> = {
-  Gateway: 'gateway.networking.k8s.io',
-  DNSRecord: 'kuadrant.io',
-};
 
 // Fetch the config.js file dynamically at runtime
 // Normally served from <cluster-host>/api/plugins/kuadrant-console/config.js
@@ -98,27 +105,6 @@ const fetchConfig = async () => {
   }
 };
 
-export const kindToAbbr = (kind: string) => {
-  return (kind.replace(/[^A-Z]/g, '') || kind.toUpperCase()).slice(0, 4);
-};
-
-// List of resource types to show by default in the filter toolbar.
-// Only these kinds will be shown in the initial render if they exist in the parsed DOTfile
-const showByDefault = new Set([
-  'AuthPolicy',
-  'Authorino',
-  'ConfigMap',
-  'ConsolePlugin',
-  'DNSPolicy',
-  'Gateway',
-  'HTTPRoute',
-  'HTTPRouteRule',
-  'Kuadrant',
-  'Limitador',
-  'RateLimitPolicy',
-  'TLSPolicy',
-]);
-
 // Convert DOT graph to PatternFly node/edge models
 const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
   try {
@@ -127,35 +113,6 @@ const parseDotToModel = (dotString: string): { nodes: any[]; edges: any[] } => {
     const edges: any[] = [];
     const groups: any[] = [];
     const connectedNodeIds = new Set<string>();
-
-    const shapeMapping: { [key: string]: NodeShape } = {
-      Gateway: NodeShape.rect,
-      HTTPRoute: NodeShape.rect,
-      TLSPolicy: NodeShape.rect,
-      DNSPolicy: NodeShape.rect,
-      AuthPolicy: NodeShape.rect,
-      RateLimitPolicy: NodeShape.rect,
-      ConfigMap: NodeShape.ellipse,
-      Listener: NodeShape.rect,
-      Kuadrant: NodeShape.ellipse,
-    };
-
-    // kinds for unassociated policies - these will be grouped
-    const unassociatedPolicies = new Set([
-      'TLSPolicy',
-      'DNSPolicy',
-      'AuthPolicy',
-      'RateLimitPolicy',
-    ]);
-
-    // kinds for Kuadrant internals - these will be grouped also
-    const kuadrantInternals = new Set([
-      'ConfigMap',
-      'Kuadrant',
-      'Limitador',
-      'Authorino',
-      'ConsolePlugin',
-    ]);
 
     const addEdge = (source: string, target: string, type: string) => {
       edges.push({
@@ -325,27 +282,7 @@ const CustomNode: React.FC<any> = ({
   );
 };
 
-const goToResource = (resourceType: string, resourceName: string) => {
-  let lookupType = resourceType;
-  // special case - Listener should go to associated Gateway
-  if (resourceType === 'Listener') {
-    lookupType = 'Gateway';
-  }
-  const finalGVK = dynamicResourceGVKMapping[lookupType];
-  if (!finalGVK) {
-    console.error(`GVK mapping not found for resource type: ${lookupType}`);
-    return;
-  }
-  const [namespace, name] = resourceName.includes('/')
-    ? resourceName.split('/')
-    : [null, resourceName];
-
-  const url = namespace
-    ? `/k8s/ns/${namespace}/${finalGVK.group}~${finalGVK.version}~${finalGVK.kind}/${name}`
-    : `/k8s/cluster/${finalGVK.group}~${finalGVK.version}~${finalGVK.kind}/${name}`;
-
-  window.location.href = url;
-};
+const goToResource = createGoToResource(dynamicResourceGVKMapping);
 
 const customLayoutFactory = (type: string, graph: any): any => {
   return new DagreLayout(graph, {
@@ -356,38 +293,17 @@ const customLayoutFactory = (type: string, graph: any): any => {
   });
 };
 
-interface PolicyConfig {
-  key: string;
-  displayName: string;
-}
-const ResourcePolicyMap: Record<string, PolicyConfig[]> = {
-  Gateway: [
-    { key: 'AuthPolicy', displayName: 'Create AuthPolicy' },
-    { key: 'DNSPolicy', displayName: 'Create DNSPolicy' },
-    { key: 'RateLimitPolicy', displayName: 'Create RateLimitPolicy' },
-    { key: 'TLSPolicy', displayName: 'Create TLSPolicy' },
-  ],
-  HTTPRoute: [
-    { key: 'AuthPolicy', displayName: 'Create AuthPolicy' },
-    { key: 'RateLimitPolicy', displayName: 'Create RateLimitPolicy' },
-  ],
-};
-const navigateToCreatePolicy = (policyType: string) => {
-  const resource = dynamicResourceGVKMapping[policyType];
-  if (!resource) {
-    console.error(`GVK mapping not found for policy type: ${policyType}`);
-    return;
-  }
-  const url = `/k8s/ns/default/${resource.group}~${resource.version}~${resource.kind}/~new`;
-  window.location.href = url;
-};
+const navigateToCreatePolicy = createNavigateToCreatePolicy(dynamicResourceGVKMapping);
 
-const getPolicyConfigsForResource = (resourceType: string): PolicyConfig[] =>
-  (ResourcePolicyMap[resourceType] || []).filter((policy) => dynamicResourceGVKMapping[policy.key]);
+// Filter policy configs based on available GVK mappings
+const getFilteredPolicyConfigs = (resourceType: string): PolicyConfig[] =>
+  (getPolicyConfigsForResource(resourceType) || []).filter(
+    (policy) => dynamicResourceGVKMapping[policy.key],
+  );
 
 const customComponentFactory = (kind: ModelKind, type: string) => {
   const contextMenuItem = (resourceType: string, resourceName: string) => {
-    const policyConfigs = getPolicyConfigsForResource(resourceType);
+    const policyConfigs = getFilteredPolicyConfigs(resourceType);
     return (
       <>
         <ContextMenuItem
@@ -607,9 +523,6 @@ const PolicyTopologyPage: React.FC = () => {
 
             const resultEdges: any[] = [];
             const processedEdges = new Set<string>();
-
-            // node types that should preserve transitive connections when filtered
-            const transitiveNodeTypes = new Set(['Listener', 'HTTPRouteRule']);
 
             // for each filtered-out node, create transitive edges
             allNodes.forEach((node) => {
@@ -886,99 +799,6 @@ const PolicyTopologyPage: React.FC = () => {
       </PageSection>
     </>
   );
-};
-
-/**
- * Retrieves a mapping from Kubernetes resource kinds to their Group/Version/Kind (GVK)
- * by querying both core API resources and aggregated API discovery.
- *
- * TODO: externalise this as a more general purpose helper for use elsewhere in the plugin
- * TODO: consider a contrib to https://github.com/openshift/dynamic-plugin-sdk/blob/main/packages/lib-utils/src/k8s/k8s-utils.ts
- *
- * This function accepts a resource hints object. If multiple API groups provide the same kind,
- * the one matching the hint (if provided) will be used.
- *
- * @param resourceHints - a mapping of resource kinds to the preferred API group.
- * Example:
- * {
- *   Gateway: 'gateway.networking.k8s.io',
- *   DNSRecord: 'kuadrant.io'
- * }
- *
- * @returns a Promise that resolves to an object mapping resource kinds to their GVK.
- */
-export const getGroupVersionKindForKind = async (
-  resourceHints: Record<string, string>,
-): Promise<Record<string, GVK>> => {
-  const mapping: Record<string, GVK> = {};
-
-  // Helper to provide resource hinting where there could be resource ambiguity (E.g. `dnsrecords.kuadrant.io` vs `dnsrecords.ingress.operator.openshift.io`)
-  const updateMapping = (kind: string, group: string, version: string) => {
-    if (resourceHints[kind]) {
-      // Always override if the new group is the hinted group.
-      if (group === resourceHints[kind]) {
-        mapping[kind] = { group, version, kind };
-      }
-    } else if (!mapping[kind]) {
-      mapping[kind] = { group, version, kind };
-    }
-  };
-
-  // fetch core API resources
-  try {
-    const coreResp = await fetch('/api/kubernetes/api/v1');
-    if (!coreResp.ok) {
-      throw new Error(`Error fetching /api/kubernetes/api/v1: ${coreResp.statusText}`);
-    }
-    const coreData = await coreResp.json();
-    if (Array.isArray(coreData.resources)) {
-      coreData.resources.forEach((res: any) => {
-        if (res.kind && !res.name?.includes('/')) {
-          // core API resources have an empty group and are v1
-          updateMapping(res.kind, '', 'v1');
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Error fetching core API resources:', error);
-  }
-
-  // aggregated API discovery data from /api/kubernetes/apis
-  // https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/3352-aggregated-discovery/README.md
-  try {
-    const aggregatedResp = await fetch('/api/kubernetes/apis', {
-      headers: {
-        Accept: 'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList',
-      },
-    });
-    if (!aggregatedResp.ok) {
-      throw new Error(`Error fetching aggregated discovery: ${aggregatedResp.statusText}`);
-    }
-    const aggregatedData = await aggregatedResp.json();
-    if (Array.isArray(aggregatedData.items)) {
-      aggregatedData.items.forEach((groupItem: any) => {
-        const groupName = groupItem.metadata?.name;
-        if (groupItem.versions && Array.isArray(groupItem.versions)) {
-          groupItem.versions.forEach((versionData: any) => {
-            const version = versionData.version;
-            if (versionData.resources && Array.isArray(versionData.resources)) {
-              versionData.resources.forEach((resource: any) => {
-                const kind = resource.responseKind?.kind || resource.kind;
-                const resourceName = resource.resource || resource.name;
-                if (kind && resourceName && !resourceName.includes('/')) {
-                  updateMapping(kind, groupName, version);
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Error fetching aggregated API discovery data:', error);
-  }
-
-  return mapping;
 };
 
 export default PolicyTopologyPage;
