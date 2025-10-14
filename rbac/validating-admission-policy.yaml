@@ -1,0 +1,93 @@
+---
+# validating admission policy to enforce label-based rules on configmaps
+# requires kubernetes 1.26+ with ValidatingAdmissionPolicy feature gate enabled
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: kuadrant-api-key-configmap-policy
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: ["v1"]
+      operations: ["CREATE", "UPDATE"]
+      resources: ["configmaps"]
+      namespaces: ["api-requests"]
+  validations:
+  # rule 1: only system accounts can set status to approved
+  - expression: >
+      !has(object.metadata.labels) ||
+      !has(object.metadata.labels['kuadrant.io/status']) ||
+      object.metadata.labels['kuadrant.io/status'] != 'approved' ||
+      request.userInfo.username.startsWith('system:serviceaccount:kuadrant-system:') ||
+      request.userInfo.username.startsWith('system:serviceaccount:api-requests:')
+    message: "Only Kuadrant system ServiceAccounts can set status to approved"
+    reason: Forbidden
+
+  # rule 2: configmaps starting with api-key-request- must have correct label
+  - expression: >
+      !object.metadata.name.startsWith('api-key-request-') ||
+      (has(object.metadata.labels) &&
+       has(object.metadata.labels['kuadrant.io/request-type']) &&
+       object.metadata.labels['kuadrant.io/request-type'] == 'api-key')
+    message: "ConfigMaps starting with 'api-key-request-' must have label kuadrant.io/request-type=api-key"
+    reason: Invalid
+
+  # rule 3: api-key request type must have request-type label
+  - expression: >
+      !has(object.metadata.labels) ||
+      !has(object.metadata.labels['kuadrant.io/request-type']) ||
+      object.metadata.labels['kuadrant.io/request-type'] != 'api-key' ||
+      object.metadata.name.startsWith('api-key-request-')
+    message: "ConfigMaps with label kuadrant.io/request-type=api-key must have name starting with 'api-key-request-'"
+    reason: Invalid
+
+  # rule 4: api-key request type must have status label
+  - expression: >
+      !has(object.metadata.labels) ||
+      !has(object.metadata.labels['kuadrant.io/request-type']) ||
+      object.metadata.labels['kuadrant.io/request-type'] != 'api-key' ||
+      (has(object.metadata.labels['kuadrant.io/status']) &&
+       object.metadata.labels['kuadrant.io/status'] in ['pending', 'approved', 'rejected'])
+    message: "API key request ConfigMaps must have label kuadrant.io/status with value pending|approved|rejected"
+    reason: Invalid
+
+---
+# binding to activate the policy
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: kuadrant-api-key-configmap-policy-binding
+spec:
+  policyName: kuadrant-api-key-configmap-policy
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: api-requests
+---
+# alternative: more restrictive policy that prevents non-admin users from creating api-key configmaps at all
+# uncomment this if you want only system accounts to create api key requests
+# apiVersion: admissionregistration.k8s.io/v1
+# kind: ValidatingAdmissionPolicy
+# metadata:
+#   name: kuadrant-api-key-creation-policy
+# spec:
+#   failurePolicy: Fail
+#   matchConstraints:
+#     resourceRules:
+#     - apiGroups: [""]
+#       apiVersions: ["v1"]
+#       operations: ["CREATE"]
+#       resources: ["configmaps"]
+#       namespaces: ["api-requests"]
+#   validations:
+#   # only system accounts can create api-key configmaps
+#   - expression: >
+#       !has(object.metadata.labels) ||
+#       !has(object.metadata.labels['kuadrant.io/request-type']) ||
+#       object.metadata.labels['kuadrant.io/request-type'] != 'api-key' ||
+#       request.userInfo.username.startsWith('system:serviceaccount:')
+#     message: "Only system ServiceAccounts can create API key request ConfigMaps"
+#     reason: Forbidden

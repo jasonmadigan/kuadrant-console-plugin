@@ -1,0 +1,92 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: configmap-viewer
+  namespace: kuadrant-test-users
+---
+# clusterrole for viewing only api-key request configmaps
+# uses resourceNames to explicitly list allowed configmaps
+# note: this requires knowing configmap names in advance
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: api-key-request-viewer-role
+rules:
+# read httproutes to browse available apis
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproutes
+  verbs:
+  - get
+  - list
+  - watch
+# read planpolicies to see api plans
+- apiGroups:
+  - extensions.kuadrant.io
+  resources:
+  - planpolicies
+  verbs:
+  - get
+  - list
+  - watch
+# read namespaces
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+---
+# role for api-requests namespace with wildcard pattern matching
+# limitation: cannot filter by labels in RBAC, only by resourceNames
+# workaround: use aggregated clusterroles or validating webhooks
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: api-key-request-viewer
+  namespace: api-requests
+rules:
+# allow list/watch on all configmaps
+# frontend will filter by labels
+# backend (if implemented) should enforce label-based access
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  # note: we give get/list/watch but NOT create/update/delete
+  # this is a read-only viewer role
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuadrant-test-configmap-viewer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: api-key-request-viewer-role
+subjects:
+- kind: ServiceAccount
+  name: configmap-viewer
+  namespace: kuadrant-test-users
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: configmap-viewer-requests
+  namespace: api-requests
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: api-key-request-viewer
+subjects:
+- kind: ServiceAccount
+  name: configmap-viewer
+  namespace: kuadrant-test-users
