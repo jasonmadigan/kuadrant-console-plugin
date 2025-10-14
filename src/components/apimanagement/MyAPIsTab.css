@@ -1,0 +1,117 @@
+/* prism code highlighting container */
+.kuadrant-api-card pre[class*='language-'] {
+  margin: 0;
+  padding: var(--pf-v6-global--spacer--md);
+  padding-right: 48px; /* space for copy button */
+  background-color: var(--pf-v6-global--BackgroundColor--dark-200) !important;
+  border-radius: var(--pf-v6-global--BorderRadius--sm);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.pf-v6-theme-dark .kuadrant-api-card pre[class*='language-'] {
+  background-color: var(--pf-v6-global--BackgroundColor--dark-400) !important;
+}
+
+.kuadrant-api-card code[class*='language-'] {
+  font-family: var(--pf-v6-global--FontFamily--monospace);
+  font-size: var(--pf-v6-global--FontSize--sm);
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* adjust prism theme colors for light theme */
+.kuadrant-api-card .token.comment,
+.kuadrant-api-card .token.prolog,
+.kuadrant-api-card .token.doctype,
+.kuadrant-api-card .token.cdata {
+  color: #6c757d;
+}
+
+.kuadrant-api-card .token.punctuation {
+  color: #495057;
+}
+
+.kuadrant-api-card .token.property,
+.kuadrant-api-card .token.tag,
+.kuadrant-api-card .token.boolean,
+.kuadrant-api-card .token.number,
+.kuadrant-api-card .token.constant,
+.kuadrant-api-card .token.symbol,
+.kuadrant-api-card .token.deleted {
+  color: #d73a49;
+}
+
+.kuadrant-api-card .token.selector,
+.kuadrant-api-card .token.attr-name,
+.kuadrant-api-card .token.string,
+.kuadrant-api-card .token.char,
+.kuadrant-api-card .token.builtin,
+.kuadrant-api-card .token.inserted {
+  color: #22863a;
+}
+
+.kuadrant-api-card .token.operator,
+.kuadrant-api-card .token.entity,
+.kuadrant-api-card .token.url,
+.kuadrant-api-card .language-css .token.string,
+.kuadrant-api-card .style .token.string {
+  color: #6f42c1;
+}
+
+.kuadrant-api-card .token.atrule,
+.kuadrant-api-card .token.attr-value,
+.kuadrant-api-card .token.keyword {
+  color: #005cc5;
+}
+
+.kuadrant-api-card .token.function,
+.kuadrant-api-card .token.class-name {
+  color: #6f42c1;
+}
+
+/* dark theme prism colours - inherit from prism-tomorrow */
+.pf-v6-theme-dark .kuadrant-api-card .token.comment,
+.pf-v6-theme-dark .kuadrant-api-card .token.prolog,
+.pf-v6-theme-dark .kuadrant-api-card .token.doctype,
+.pf-v6-theme-dark .kuadrant-api-card .token.cdata {
+  color: #999;
+}
+
+.pf-v6-theme-dark .kuadrant-api-card .token.punctuation {
+  color: #ccc;
+}
+
+.pf-v6-theme-dark .kuadrant-api-card .token.property,
+.pf-v6-theme-dark .kuadrant-api-card .token.tag,
+.pf-v6-theme-dark .kuadrant-api-card .token.boolean,
+.pf-v6-theme-dark .kuadrant-api-card .token.number,
+.pf-v6-theme-dark .kuadrant-api-card .token.constant,
+.pf-v6-theme-dark .kuadrant-api-card .token.symbol {
+  color: #f08d49;
+}
+
+.pf-v6-theme-dark .kuadrant-api-card .token.selector,
+.pf-v6-theme-dark .kuadrant-api-card .token.attr-name,
+.pf-v6-theme-dark .kuadrant-api-card .token.string,
+.pf-v6-theme-dark .kuadrant-api-card .token.char,
+.pf-v6-theme-dark .kuadrant-api-card .token.builtin {
+  color: #b5cea8;
+}
+
+.pf-v6-theme-dark .kuadrant-api-card .token.operator,
+.pf-v6-theme-dark .kuadrant-api-card .token.entity,
+.pf-v6-theme-dark .kuadrant-api-card .token.url {
+  color: #67cdcc;
+}
+
+.pf-v6-theme-dark .kuadrant-api-card .token.atrule,
+.pf-v6-theme-dark .kuadrant-api-card .token.attr-value,
+.pf-v6-theme-dark .kuadrant-api-card .token.keyword {
+  color: #c678dd;
+}
+
+.pf-v6-theme-dark .kuadrant-api-card .token.function,
+.pf-v6-theme-dark .kuadrant-api-card .token.class-name {
+  color: #e5c07b;
+}

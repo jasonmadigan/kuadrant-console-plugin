@@ -83,10 +83,11 @@
       "KuadrantRateLimitPolicyCreatePage": "./components/KuadrantRateLimitPolicyCreatePage",
       "KuadrantTokenRateLimitPolicyCreatePage": "./components/KuadrantTokenRateLimitPolicyCreatePage",
       "KuadrantOIDCPolicyCreatePage": "./components/KuadrantOIDCPolicyCreatePage",
-      "KuadrantPlanPolicyCreatePage": "./components/KuadrantPlanPolicyCreatePage",
+      "KuadrantPlanPolicyCreatePage": "./components/planpolicy/KuadrantPlanPolicyCreatePage",
       "KuadrantTLSCreatePage": "./components/KuadrantTLSCreatePage",
       "HTTPRoutePoliciesPage": "./components/HTTPRoutePoliciesPage",
       "GatewayPoliciesPage": "./components/GatewayPoliciesPage",
+      "ApiManagementPage": "./components/apimanagement/ApiManagementPage",
       "useDNSPolicyActions": "./components/dnspolicy/useDNSPolicyActions",
       "useTLSPolicyActions": "./components/tlspolicy/useTLSPolicyActions"
     },
@@ -101,12 +102,14 @@
     "@patternfly/react-code-editor": "^5.4.0",
     "@patternfly/react-table": "^6.2.2",
     "@patternfly/react-topology": "^6.2.0",
+    "@types/prismjs": "^1.26.5",
     "babel-loader": "^8.2.0",
     "graphlib": "^2.1.8",
     "graphlib-dot": "^0.6.4",
     "i18next": "^25.8.0",
     "i18next-parser": "^9.0.1",
-    "pluralize": "^8.0.0"
+    "pluralize": "^8.0.0",
+    "prismjs": "^1.30.0"
   },
   "packageManager": "yarn@4.12.0"
 }
