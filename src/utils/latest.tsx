@@ -5,6 +5,7 @@ const resourceGVKMapping: { [key: string]: { group: string; version: string; kin
   DNSPolicy: { group: 'kuadrant.io', version: 'v1', kind: 'DNSPolicy' },
   AuthPolicy: { group: 'kuadrant.io', version: 'v1', kind: 'AuthPolicy' },
   RateLimitPolicy: { group: 'kuadrant.io', version: 'v1', kind: 'RateLimitPolicy' },
+  PlanPolicy: { group: 'extensions.kuadrant.io', version: 'v1alpha1', kind: 'PlanPolicy' },
   ConfigMap: { group: '', version: 'v1', kind: 'ConfigMap' },
   Listener: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'Listener' },
   GatewayClass: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'GatewayClass' },

@@ -42,6 +42,7 @@ export const resources: Resource[] = [
   { name: 'DNSPolicies', gvk: resourceGVKMapping['DNSPolicy'] },
   { name: 'RateLimitPolicies', gvk: resourceGVKMapping['RateLimitPolicy'] },
   { name: 'TLSPolicies', gvk: resourceGVKMapping['TLSPolicy'] },
+  { name: 'PlanPolicies', gvk: resourceGVKMapping['PlanPolicy'] },
 ];
 
 interface ResourceRBAC {
@@ -68,11 +69,11 @@ const useResourceRBAC = (resourceKey: string, namespace?: string): ResourceRBAC 
     verb: 'create',
     namespace,
   });
-  // console.log(
-  //   `[RBAC] ${resourceKey} in ns ${
-  //     namespace || 'cluster'
-  //   }: list = ${listAllowed}, create = ${createAllowed}`,
-  // );
+  console.log(
+    `[RBAC] ${resourceKey} in ns ${
+      namespace || 'cluster'
+    }: list = ${listAllowed}, create = ${createAllowed}`,
+  );
   return { list: listAllowed, create: createAllowed };
 };
 
@@ -115,11 +116,15 @@ export const AllPoliciesListPage: React.FC<{
     setIsOpen(false); // Close the dropdown after selecting an option
   };
 
-  const canCreateAny = ['AuthPolicy', 'RateLimitPolicy', 'DNSPolicy', 'TLSPolicy'].some(
-    (policy) => resourceRBAC[policy]?.create,
-  );
+  const canCreateAny = [
+    'AuthPolicy',
+    'RateLimitPolicy',
+    'DNSPolicy',
+    'TLSPolicy',
+    'PlanPolicy',
+  ].some((policy) => resourceRBAC[policy]?.create);
 
-  const createPolicyItems = ['AuthPolicy', 'RateLimitPolicy']
+  const createPolicyItems = ['AuthPolicy', 'RateLimitPolicy', 'PlanPolicy']
     .concat(activePerspective !== 'dev' ? ['DNSPolicy', 'TLSPolicy'] : [])
     .map((policy) => {
       return resourceRBAC[policy]?.create ? (
@@ -273,11 +278,16 @@ const KuadrantPoliciesPage: React.FC = () => {
     DNSPolicy: useResourceRBAC('DNSPolicy', nsForCheck),
     RateLimitPolicy: useResourceRBAC('RateLimitPolicy', nsForCheck),
     TLSPolicy: useResourceRBAC('TLSPolicy', nsForCheck),
+    PlanPolicy: useResourceRBAC('PlanPolicy', nsForCheck),
   };
 
-  const permsLoaded = ['AuthPolicy', 'DNSPolicy', 'RateLimitPolicy', 'TLSPolicy'].every(
-    (key) => resourceRBAC[key] !== undefined,
-  );
+  const permsLoaded = [
+    'AuthPolicy',
+    'DNSPolicy',
+    'RateLimitPolicy',
+    'TLSPolicy',
+    'PlanPolicy',
+  ].every((key) => resourceRBAC[key] !== undefined);
   if (!permsLoaded) {
     return <div>Loading permissions...</div>;
   }
@@ -286,7 +296,8 @@ const KuadrantPoliciesPage: React.FC = () => {
     !resourceRBAC['AuthPolicy'].list &&
     !resourceRBAC['RateLimitPolicy'].list &&
     !resourceRBAC['DNSPolicy'].list &&
-    !resourceRBAC['TLSPolicy']?.list;
+    !resourceRBAC['TLSPolicy']?.list &&
+    !resourceRBAC['PlanPolicy']?.list;
 
   const All: React.FC = () => (
     <AllPoliciesListPage
@@ -307,6 +318,14 @@ const KuadrantPoliciesPage: React.FC = () => {
   const RateLimit: React.FC = () => (
     <PoliciesListPage
       resource={resources[2]}
+      activeNamespace={activeNamespace}
+      resourceRBAC={resourceRBAC}
+    />
+  );
+
+  const Plan: React.FC = () => (
+    <PoliciesListPage
+      resource={resources[4]}
       activeNamespace={activeNamespace}
       resourceRBAC={resourceRBAC}
     />
@@ -362,6 +381,11 @@ const KuadrantPoliciesPage: React.FC = () => {
       href: 'ratelimit',
       name: t('RateLimit'),
       component: RateLimit,
+    },
+    {
+      href: 'plan',
+      name: t('Plan'),
+      component: Plan,
     },
   ];
 

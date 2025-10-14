@@ -1,0 +1,98 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api-consumer
+  namespace: kuadrant-test-users
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: api-consumer-role
+rules:
+# read httproutes to browse available apis
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproutes
+  verbs:
+  - get
+  - list
+  - watch
+# read planpolicies to see api plans
+- apiGroups:
+  - extensions.kuadrant.io
+  resources:
+  - planpolicies
+  verbs:
+  - get
+  - list
+  - watch
+# create configmaps in kuadrant-system for api key requests
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+# read namespaces (required by console)
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuadrant-test-api-consumer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: api-consumer-role
+subjects:
+- kind: ServiceAccount
+  name: api-consumer
+  namespace: kuadrant-test-users
+---
+# allow viewing api key request configmaps (label-filtered)
+# note: label selectors in RBAC require resourceNames or are applied at list time
+# we can only filter by labels when listing, not in the RBAC rule itself
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: api-consumer-requests
+  namespace: api-requests
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  # consumers can only view configmaps with kuadrant.io/request-type=api-key label
+  # this is enforced at application level, not RBAC level
+  # RBAC gives broad access, app filters by label
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-consumer-requests
+  namespace: api-requests
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: api-consumer-requests
+subjects:
+- kind: ServiceAccount
+  name: api-consumer
+  namespace: kuadrant-test-users
