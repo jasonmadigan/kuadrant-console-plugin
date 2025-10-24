@@ -133,6 +133,77 @@ The Policy Topology view is built on PatternFly React Topology and visualises re
 - Module-level object mutations don't trigger React re-renders, causing initialisation failures
 - Always use state for values that affect rendering or hook dependencies
 
+## API Management Perspective
+
+The plugin implements a custom "API Management" perspective following OpenShift Console patterns. This required a specific implementation approach:
+
+### Perspective Implementation Pattern
+
+Custom perspectives in JSON-based plugins (`console-extensions.json`) require:
+
+1. **Single module with named exports** (`src/components/perspective.tsx`):
+   ```typescript
+   export const icon: ResolvedExtension<Perspective>['properties']['icon'] = {
+     default: CubeIcon  // Must be wrapped in { default: Component }
+   };
+   export const getLandingPageURL = (flags, isFirstVisit) => '/api-management/all-namespaces';
+   export const getImportRedirectURL = (namespace) => `/api-management/ns/${namespace}`;
+   ```
+
+2. **Single exposed module** in `package.json`:
+   ```json
+   "exposedModules": {
+     "perspective": "./components/perspective"
+   }
+   ```
+
+3. **Dot notation references** in `console-extensions.json`:
+   ```json
+   {
+     "type": "console.perspective",
+     "properties": {
+       "icon": { "$codeRef": "perspective.icon" },
+       "landingPageURL": { "$codeRef": "perspective.getLandingPageURL" },
+       "importRedirectURL": { "$codeRef": "perspective.getImportRedirectURL" }
+     }
+   }
+   ```
+
+### Critical Details
+
+- **Icon format**: Must be `{ default: Component }`, not the component itself
+- **Dot notation**: Required for accessing named exports from a single module
+- **TypeScript types**: Use `ResolvedExtension<Perspective>['properties']['icon']` for type safety
+- **Reference**: Based on OpenShift's built-in `dev-console` perspective implementation
+
+See `docs/perspective-implementation-notes.md` for detailed lessons learned.
+
+### Navigation Structure
+
+The API Management perspective uses a flattened navigation structure with individual menu items instead of tabs:
+
+**Navigation Sections:**
+- **API Management** section with direct links to:
+  - Browse APIs (`/api-management/all-namespaces/browse`)
+  - My APIs (`/api-management/all-namespaces/my-apis`)
+  - My API Keys (`/api-management/all-namespaces/my-keys`)
+  - My Requests (`/api-management/all-namespaces/my-requests`)
+  - Approval Queue (`/api-management/all-namespaces/approval-queue`) - admin only
+  - API Key Overview (`/api-management/all-namespaces/api-key-overview`) - admin only
+
+- **Kuadrant** section (mirrors admin perspective):
+  - Overview
+  - Policies
+  - Policy Topology
+
+**Implementation Notes:**
+- API Management is **only** available in the API Management perspective (removed from admin/dev perspectives)
+- Navigation uses URL-based routing rather than tabs for better deep-linking
+- Section is extracted from URL pathname using `useLocation()` hook
+- Routes use `exact: false` to allow sub-paths to match the base route
+- Component re-renders when section changes via `key={currentSection}` on PageSection
+- Namespace switching preserves the current section in the URL
+
 ## Development Commands
 
 ```bash

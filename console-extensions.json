@@ -1,5 +1,122 @@
 [
   {
+    "type": "console.perspective",
+    "properties": {
+      "id": "apimanagement",
+      "name": "%plugin__kuadrant-console-plugin~API Management%",
+      "icon": { "$codeRef": "perspective.icon" },
+      "landingPageURL": { "$codeRef": "perspective.getLandingPageURL" },
+      "importRedirectURL": { "$codeRef": "perspective.getImportRedirectURL" }
+    }
+  },
+  {
+    "type": "console.navigation/section",
+    "properties": {
+      "id": "api-management-main",
+      "name": "%plugin__kuadrant-console-plugin~API Management%",
+      "perspective": "apimanagement"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "browse-apis",
+      "name": "%plugin__kuadrant-console-plugin~Browse APIs%",
+      "href": "/api-management/all-namespaces/browse",
+      "perspective": "apimanagement",
+      "section": "api-management-main"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "my-apis",
+      "name": "%plugin__kuadrant-console-plugin~My APIs%",
+      "href": "/api-management/all-namespaces/my-apis",
+      "perspective": "apimanagement",
+      "section": "api-management-main"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "my-api-keys",
+      "name": "%plugin__kuadrant-console-plugin~My API Keys%",
+      "href": "/api-management/all-namespaces/my-keys",
+      "perspective": "apimanagement",
+      "section": "api-management-main"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "my-requests",
+      "name": "%plugin__kuadrant-console-plugin~My Requests%",
+      "href": "/api-management/all-namespaces/my-requests",
+      "perspective": "apimanagement",
+      "section": "api-management-main"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "approval-queue",
+      "name": "%plugin__kuadrant-console-plugin~Approval Queue%",
+      "href": "/api-management/all-namespaces/approval-queue",
+      "perspective": "apimanagement",
+      "section": "api-management-main"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "api-key-overview",
+      "name": "%plugin__kuadrant-console-plugin~API Key Overview%",
+      "href": "/api-management/all-namespaces/api-key-overview",
+      "perspective": "apimanagement",
+      "section": "api-management-main"
+    }
+  },
+  {
+    "type": "console.navigation/section",
+    "properties": {
+      "id": "kuadrant-section-apimanagement",
+      "name": "%plugin__kuadrant-console-plugin~Kuadrant%",
+      "perspective": "apimanagement"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "kuadrant-overview-apimanagement",
+      "name": "%plugin__kuadrant-console-plugin~Overview%",
+      "href": "/kuadrant/overview",
+      "perspective": "apimanagement",
+      "section": "kuadrant-section-apimanagement"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "kuadrant-policies-apimanagement",
+      "name": "%plugin__kuadrant-console-plugin~Policies%",
+      "href": "/kuadrant/all-namespaces/policies",
+      "perspective": "apimanagement",
+      "section": "kuadrant-section-apimanagement"
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "kuadrant-policy-topology-apimanagement",
+      "name": "%plugin__kuadrant-console-plugin~Policy Topology%",
+      "href": "/kuadrant/policy-topology",
+      "perspective": "apimanagement",
+      "section": "kuadrant-section-apimanagement",
+      "badge": "dev"
+    }
+  },
+  {
     "type": "console.tab/horizontalNav",
     "properties": {
       "model": {
@@ -267,50 +384,16 @@
     "type": "console.page/route",
     "properties": {
       "path": "/api-management/all-namespaces",
-      "component": { "$codeRef": "ApiManagementPage" }
+      "component": { "$codeRef": "ApiManagementPage" },
+      "exact": false
     }
   },
   {
     "type": "console.page/route",
     "properties": {
       "path": "/api-management/ns/:ns",
-      "component": { "$codeRef": "ApiManagementPage" }
-    }
-  },
-  {
-    "type": "console.navigation/section",
-    "properties": {
-      "id": "api-management-section-admin",
-      "name": "%plugin__kuadrant-console-plugin~API Management%",
-      "perspective": "admin"
-    }
-  },
-  {
-    "type": "console.navigation/href",
-    "properties": {
-      "id": "api-management-admin",
-      "name": "%plugin__kuadrant-console-plugin~API Management%",
-      "href": "/api-management/all-namespaces",
-      "perspective": "admin",
-      "section": "api-management-section-admin"
-    }
-  },
-  {
-    "type": "console.navigation/section",
-    "properties": {
-      "id": "api-management-section-dev",
-      "name": "%plugin__kuadrant-console-plugin~API Management%",
-      "perspective": "dev"
-    }
-  },
-  {
-    "type": "console.navigation/href",
-    "properties": {
-      "id": "api-management-dev",
-      "name": "%plugin__kuadrant-console-plugin~API Management%",
-      "href": "/api-management/all-namespaces",
-      "perspective": "dev",
-      "section": "api-management-section-dev"
+      "component": { "$codeRef": "ApiManagementPage" },
+      "exact": false
     }
   }
 ]
