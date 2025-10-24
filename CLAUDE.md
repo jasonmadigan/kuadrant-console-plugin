@@ -196,6 +196,44 @@ To ensure text visibility in both light and dark themes:
 - Policy nodes use light blue backgrounds with theme-appropriate opacity
 - Always test components in both light and dark themes
 
+## Gateway API Version Support
+
+The OpenShift console may display Gateway API resources using different API versions in the UI than what's stored in the cluster. For example, a Gateway resource stored as `gateway.networking.k8s.io/v1` might be displayed in the console UI as `v1beta1`.
+
+**Important**: When registering tabs or other extensions for Gateway API resources (Gateway, HTTPRoute, etc.), **always register for both v1 and v1beta1** to ensure the extension appears regardless of which version the console uses:
+
+```json
+{
+  "type": "console.tab/horizontalNav",
+  "properties": {
+    "model": {
+      "group": "gateway.networking.k8s.io",
+      "version": "v1",
+      "kind": "Gateway"
+    },
+    "page": { "name": "Policies", "href": "policies" },
+    "component": { "$codeRef": "GatewayPoliciesPage" }
+  }
+},
+{
+  "type": "console.tab/horizontalNav",
+  "properties": {
+    "model": {
+      "group": "gateway.networking.k8s.io",
+      "version": "v1beta1",
+      "kind": "Gateway"
+    },
+    "page": { "name": "Policies", "href": "policies" },
+    "component": { "$codeRef": "GatewayPoliciesPage" }
+  }
+}
+```
+
+This applies to:
+- Gateway
+- HTTPRoute
+- Any other Gateway API resources (GRPCRoute, TCPRoute, etc.)
+
 ## Contributing
 
 When adding new features:
@@ -204,4 +242,5 @@ When adding new features:
 3. Update `console-extensions.json` for new routes
 4. Add i18n keys for new strings
 5. Test with a local OpenShift console instance
+6. For Gateway API resources, register extensions for both v1 and v1beta1
 
