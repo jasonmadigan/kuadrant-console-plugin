@@ -6,10 +6,10 @@ import {
   Label,
   Alert,
   Button,
-  Modal /* data-codemods */,
-  ModalBody /* data-codemods */,
-  ModalFooter /* data-codemods */,
-  ModalHeader /* data-codemods */,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Dropdown,
   DropdownItem,
   DropdownList,
@@ -39,22 +39,9 @@ import {
   RowProps,
   TableColumn,
   ListPageBody,
-  ResourceLink,
-  useActiveNamespace,
 } from '@openshift-console/dynamic-plugin-sdk';
-import { ApiKeyRequest, APIKeyRequestGVK } from '../../types/api-management';
-import { filterRequestsByUser } from '../../utils/api-key-utils';
-
-const APIKeyRequestModel = {
-  apiGroup: APIKeyRequestGVK.group,
-  apiVersion: APIKeyRequestGVK.version,
-  kind: APIKeyRequestGVK.kind,
-  plural: 'apikeyrequests',
-  abbr: 'akr',
-  label: 'APIKeyRequest',
-  labelPlural: 'APIKeyRequests',
-  namespaced: true,
-};
+import { APIKey, APIKeyGVK, APIKeyModel } from '../../types/api-management';
+import { filterAPIKeysByUser } from '../../utils/api-key-utils';
 
 interface MyRequestsTabProps {
   userId: string;
@@ -62,10 +49,9 @@ interface MyRequestsTabProps {
 
 export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
-  const [activeNamespace] = useActiveNamespace();
   const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
-  const [selectedRequest, setSelectedRequest] = React.useState<ApiKeyRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = React.useState<APIKey | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState('');
@@ -83,21 +69,18 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
   const [perPage, setPerPage] = React.useState<number>(10);
   const [statusFilter, setStatusFilter] = React.useState<string>('All');
 
-  // watch APIKeyRequest CRs in active namespace
-  // if #ALL_NS# is selected, watch all namespaces
-  const watchNamespace = activeNamespace === '#ALL_NS#' ? undefined : activeNamespace;
-
-  const [requests, requestsLoaded, requestsError] = useK8sWatchResource<ApiKeyRequest[]>({
-    groupVersionKind: APIKeyRequestGVK,
+  // watch APIKey CRs across all namespaces
+  const [apiKeys, apiKeysLoaded, apiKeysError] = useK8sWatchResource<APIKey[]>({
+    groupVersionKind: APIKeyGVK,
     isList: true,
-    namespace: watchNamespace,
+    namespaced: false,
   });
 
   // filter to user's requests
   const userRequests = React.useMemo(() => {
-    if (!requestsLoaded) return [];
-    return filterRequestsByUser(requests, userId);
-  }, [requests, requestsLoaded, userId]);
+    if (!apiKeysLoaded || !apiKeys) return [];
+    return filterAPIKeysByUser(apiKeys, userId);
+  }, [apiKeys, apiKeysLoaded, userId]);
 
   // apply filters
   const filteredData = React.useMemo(() => {
@@ -113,9 +96,9 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
       const filterValue = filters.toLowerCase();
       data = data.filter((item) => {
         if (filterSelected === 'API') {
-          return item.spec.apiName.toLowerCase().includes(filterValue);
+          return item.spec.apiProductRef.name.toLowerCase().includes(filterValue);
         } else if (filterSelected === 'Namespace') {
-          return item.spec.apiNamespace.toLowerCase().includes(filterValue);
+          return (item.metadata?.namespace || '').toLowerCase().includes(filterValue);
         } else if (filterSelected === 'Plan') {
           return item.spec.planTier.toLowerCase().includes(filterValue);
         }
@@ -170,7 +153,7 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
     setIsStatusOpen(false);
   };
 
-  const handleEditClick = (request: ApiKeyRequest) => {
+  const handleEditClick = (request: APIKey) => {
     setSelectedRequest(request);
     setEditUseCase(request.spec.useCase || '');
     setEditError('');
@@ -185,7 +168,7 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
 
     try {
       await k8sPatch({
-        model: APIKeyRequestModel,
+        model: APIKeyModel,
         resource: selectedRequest,
         data: [
           {
@@ -206,7 +189,7 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
     }
   };
 
-  const handleDeleteClick = (request: ApiKeyRequest) => {
+  const handleDeleteClick = (request: APIKey) => {
     setSelectedRequest(request);
     setDeleteError('');
     setDeleteModalOpen(true);
@@ -219,12 +202,8 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
     setDeleteError('');
 
     try {
-      // if request was approved and has an api key, we should note that the secret needs manual cleanup
-      // in the future, a controller could handle this with owner references
-
-      // delete the request CR
       await k8sDelete({
-        model: APIKeyRequestModel,
+        model: APIKeyModel,
         resource: selectedRequest,
       });
 
@@ -238,16 +217,16 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
     }
   };
 
-  const columns: TableColumn<ApiKeyRequest>[] = [
+  const columns: TableColumn<APIKey>[] = [
     {
-      title: t('API'),
+      title: t('API Product'),
       id: 'api',
-      sort: 'spec.apiName',
+      sort: 'spec.apiProductRef.name',
     },
     {
       title: t('Namespace'),
       id: 'namespace',
-      sort: 'spec.apiNamespace',
+      sort: 'metadata.namespace',
     },
     {
       title: t('Plan'),
@@ -261,16 +240,12 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
     {
       title: t('Requested Date'),
       id: 'requestedDate',
-      sort: 'spec.requestedAt',
+      sort: 'metadata.creationTimestamp',
     },
     {
       title: t('Status'),
       id: 'status',
       sort: 'status.phase',
-    },
-    {
-      title: t('Comment'),
-      id: 'comment',
     },
     {
       title: '',
@@ -279,38 +254,26 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
     },
   ];
 
-  const RequestRow: React.FC<RowProps<ApiKeyRequest>> = ({ obj, activeColumnIDs }) => {
+  const RequestRow: React.FC<RowProps<APIKey>> = ({ obj, activeColumnIDs }) => {
     const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
     const status = obj.status?.phase || 'Pending';
-    const statusColor =
-      status === 'Pending' ? 'orange' : status === 'Approved' ? 'green' : 'red';
+    const statusColor = status === 'Pending' ? 'orange' : status === 'Approved' ? 'green' : 'red';
     const isPending = status === 'Pending';
 
-    const requestedDate = obj.spec.requestedAt
-      ? new Date(obj.spec.requestedAt).toLocaleDateString()
-      : 'unknown';
+    const requestedDate = obj.metadata?.creationTimestamp
+      ? new Date(obj.metadata.creationTimestamp).toLocaleDateString()
+      : '-';
 
     return (
       <>
         <TableData id="api" activeColumnIDs={activeColumnIDs}>
-          <ResourceLink
-            groupVersionKind={{
-              group: 'gateway.networking.k8s.io',
-              version: 'v1',
-              kind: 'HTTPRoute',
-            }}
-            name={obj.spec.apiName}
-            namespace={obj.spec.apiNamespace}
-          />
+          {obj.spec.apiProductRef.name}
         </TableData>
         <TableData id="namespace" activeColumnIDs={activeColumnIDs}>
-          <ResourceLink
-            groupVersionKind={{ version: 'v1', kind: 'Namespace' }}
-            name={obj.spec.apiNamespace}
-          />
+          {obj.metadata?.namespace}
         </TableData>
         <TableData id="plan" activeColumnIDs={activeColumnIDs}>
-          {obj.spec.planTier}
+          <Label isCompact>{obj.spec.planTier}</Label>
         </TableData>
         <TableData id="useCase" activeColumnIDs={activeColumnIDs}>
           {obj.spec.useCase
@@ -324,9 +287,6 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
         </TableData>
         <TableData id="status" activeColumnIDs={activeColumnIDs}>
           <Label color={statusColor}>{status}</Label>
-        </TableData>
-        <TableData id="comment" activeColumnIDs={activeColumnIDs}>
-          {obj.status?.reason || '-'}
         </TableData>
         <TableData id="actions" activeColumnIDs={activeColumnIDs} className="pf-v6-c-table__action">
           <Dropdown
@@ -363,7 +323,7 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
 
   return (
     <>
-      {requestsError && <Alert variant="danger" title={t('Error loading requests')} isInline />}
+      {apiKeysError && <Alert variant="danger" title={t('Error loading requests')} isInline />}
 
       <div className="kuadrant-api-management-requests">
         <ListPageBody>
@@ -429,7 +389,7 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
             </ToolbarContent>
           </Toolbar>
 
-          {paginatedData.length === 0 && requestsLoaded ? (
+          {paginatedData.length === 0 && apiKeysLoaded ? (
             <EmptyState
               titleText={
                 <Title headingLevel="h4" size="lg">
@@ -440,16 +400,16 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
             >
               <EmptyStateBody>
                 {userRequests.length === 0
-                  ? t('You have not submitted any API access requests yet.')
+                  ? t('You have not submitted any API key requests yet.')
                   : t('No requests match the current filters.')}
               </EmptyStateBody>
             </EmptyState>
           ) : (
-            <VirtualizedTable<ApiKeyRequest>
+            <VirtualizedTable<APIKey>
               data={paginatedData}
               unfilteredData={filteredData}
-              loaded={requestsLoaded}
-              loadError={requestsError}
+              loaded={apiKeysLoaded}
+              loadError={apiKeysError}
               columns={columns}
               Row={RequestRow}
             />
@@ -482,15 +442,16 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
         onClose={() => setEditModalOpen(false)}
         aria-label={t('Edit request')}
       >
-        <ModalHeader title={t('Edit API Access Request')} />
+        <ModalHeader title={t('Edit API Key Request')} />
         <ModalBody>
           {editError && <Alert variant="danger" title={editError} isInline />}
           <Form>
-            <FormGroup label={t('API')} fieldId="api-name">
-              <TextInput id="api-name" value={selectedRequest?.spec.apiName} isDisabled />
-            </FormGroup>
-            <FormGroup label={t('Namespace')} fieldId="api-namespace">
-              <TextInput id="api-namespace" value={selectedRequest?.spec.apiNamespace} isDisabled />
+            <FormGroup label={t('API Product')} fieldId="api-name">
+              <TextInput
+                id="api-name"
+                value={selectedRequest?.spec.apiProductRef.name}
+                isDisabled
+              />
             </FormGroup>
             <FormGroup label={t('Plan')} fieldId="plan-tier">
               <TextInput id="plan-tier" value={selectedRequest?.spec.planTier} isDisabled />
@@ -526,16 +487,19 @@ export const MyRequestsTab: React.FC<MyRequestsTabProps> = ({ userId }) => {
         onClose={() => setDeleteModalOpen(false)}
         aria-label={t('Delete request confirmation')}
       >
-        <ModalHeader title={t('Delete API Access Request?')} />
+        <ModalHeader title={t('Delete API Key Request?')} />
         <ModalBody>
           {deleteError && <Alert variant="danger" title={deleteError} isInline />}
           <p>
-            {t('Are you sure you want to delete this request for')} <strong>{selectedRequest?.spec.apiName}</strong>?
+            {t('Are you sure you want to delete this request for')}{' '}
+            <strong>{selectedRequest?.spec.apiProductRef.name}</strong>?
           </p>
-          {selectedRequest?.status?.apiKey && (
-            <p style={{ marginTop: '8px' }}>
-              <strong>{t('Note:')}</strong> {t('This request has an approved API key. Deleting the request does not automatically revoke the key.')}
-            </p>
+          {selectedRequest?.status?.phase === 'Approved' && (
+            <Alert variant="warning" isInline title={t('Active API Key')} className="pf-v6-u-mt-md">
+              {t(
+                'This request has an approved API key. The associated secret will also be deleted.',
+              )}
+            </Alert>
           )}
         </ModalBody>
         <ModalFooter>
