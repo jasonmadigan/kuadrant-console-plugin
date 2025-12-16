@@ -5,10 +5,10 @@ import {
   Button,
   EmptyState,
   EmptyStateBody,
-  Modal /* data-codemods */,
-  ModalBody /* data-codemods */,
-  ModalFooter /* data-codemods */,
-  ModalHeader /* data-codemods */,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Form,
   FormGroup,
   FormSelect,
@@ -19,32 +19,17 @@ import {
   FormHelperText,
   HelperText,
   HelperTextItem,
+  Label,
+  LabelGroup,
 } from '@patternfly/react-core';
 import { CubesIcon } from '@patternfly/react-icons';
-import {
-  useK8sWatchResource,
-  K8sResourceCommon,
-  useActiveNamespace,
-  K8sResourceKind,
-} from '@openshift-console/dynamic-plugin-sdk';
-import resourceGVKMapping from '../../utils/latest';
-import { PlanPolicy } from '../planpolicy/types';
+import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
+import { APIProduct, APIProductGVK, Plan } from '../../types/api-management';
 import { createAccessRequest } from '../../utils/request-operations';
-import { PlanTier } from '../../types/api-management';
-
-interface HTTPRoute extends K8sResourceCommon {
-  spec: {
-    parentRefs?: Array<{
-      name: string;
-      namespace?: string;
-    }>;
-    hostnames?: string[];
-  };
-}
 
 interface BrowseAPIsTabProps {
   userId: string;
-  userEmail: string;
+  userEmail?: string;
   onRequestCreated?: () => void;
 }
 
@@ -54,92 +39,41 @@ export const BrowseAPIsTab: React.FC<BrowseAPIsTabProps> = ({
   onRequestCreated,
 }) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
-  const [activeNamespace] = useActiveNamespace();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [selectedRoute, setSelectedRoute] = React.useState<HTTPRoute | null>(null);
-  const [selectedPlan, setSelectedPlan] = React.useState<PlanTier>('silver');
-  const [requestNamespace, setRequestNamespace] = React.useState('');
+  const [selectedProduct, setSelectedProduct] = React.useState<APIProduct | null>(null);
+  const [selectedPlan, setSelectedPlan] = React.useState<string>('');
   const [useCase, setUseCase] = React.useState('');
   const [error, setError] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
 
-  // watch namespaces for dropdown
-  const [namespaces, namespacesLoaded] = useK8sWatchResource<K8sResourceKind[]>({
-    groupVersionKind: { version: 'v1', kind: 'Namespace' },
+  // watch APIProducts across all namespaces
+  const [products, productsLoaded, productsError] = useK8sWatchResource<APIProduct[]>({
+    groupVersionKind: APIProductGVK,
     isList: true,
     namespaced: false,
   });
 
-  // watch httproutes across all namespaces
-  const [routes, routesLoaded, routesError] = useK8sWatchResource<HTTPRoute[]>({
-    groupVersionKind: resourceGVKMapping.HTTPRoute,
-    isList: true,
-    namespaced: false,
-  });
+  // filter to only published products
+  const publishedProducts = React.useMemo(() => {
+    if (!productsLoaded || !products) return [];
+    return products.filter((p) => p.spec.publishStatus === 'Published');
+  }, [products, productsLoaded]);
 
-  // watch planpolicies across all namespaces
-  const [policies, policiesLoaded, policiesError] = useK8sWatchResource<PlanPolicy[]>({
-    groupVersionKind: resourceGVKMapping.PlanPolicy,
-    isList: true,
-    namespaced: false,
-  });
-
-  // filter routes that have associated planpolicies
-  const routesWithPlans = React.useMemo(() => {
-    console.log('BrowseAPIsTab - routesLoaded:', routesLoaded, 'policiesLoaded:', policiesLoaded);
-    console.log('BrowseAPIsTab - routesError:', routesError, 'policiesError:', policiesError);
-
-    if (!routesLoaded || !policiesLoaded) return [];
-
-    console.log('BrowseAPIsTab - HTTPRoutes loaded:', routes.length);
-    console.log('BrowseAPIsTab - PlanPolicies loaded:', policies.length);
-    console.log('BrowseAPIsTab - Routes:', JSON.stringify(routes.map(r => `${r.metadata?.namespace}/${r.metadata?.name}`)));
-    console.log('BrowseAPIsTab - Policies:', JSON.stringify(policies.map(p => ({
-      name: `${p.metadata?.namespace}/${p.metadata?.name}`,
-      targetRef: `${p.spec?.targetRef?.kind}/${p.spec?.targetRef?.name}`,
-      namespace: p.metadata?.namespace
-    }))));
-
-    const filtered = routes.filter((route) => {
-      const hasMatch = policies.some(
-        (policy) =>
-          policy.spec.targetRef.kind === 'HTTPRoute' &&
-          policy.spec.targetRef.name === route.metadata.name &&
-          policy.metadata.namespace === route.metadata.namespace,
-      );
-      if (hasMatch) {
-        console.log('BrowseAPIsTab - MATCHED route:', route.metadata.namespace, route.metadata.name);
-      }
-      return hasMatch;
-    });
-
-    console.log('BrowseAPIsTab - Filtered routes with plans:', filtered.length);
-    return filtered;
-  }, [routes, policies, routesLoaded, policiesLoaded, routesError, policiesError]);
-
-  const getPlanPolicyForRoute = (route: HTTPRoute): PlanPolicy | undefined => {
-    return policies.find(
-      (policy) =>
-        policy.spec.targetRef.kind === 'HTTPRoute' &&
-        policy.spec.targetRef.name === route.metadata.name &&
-        policy.metadata.namespace === route.metadata.namespace,
-    );
-  };
-
-  const handleRequestAccess = (route: HTTPRoute) => {
-    setSelectedRoute(route);
+  const handleRequestAccess = (product: APIProduct) => {
+    setSelectedProduct(product);
     setError('');
     setUseCase('');
-    // default to active namespace, fallback to 'default'
-    setRequestNamespace(activeNamespace === '#ALL_NS#' ? 'default' : activeNamespace || 'default');
+    // default to first available plan
+    const plans = product.status?.discoveredPlans || [];
+    setSelectedPlan(plans.length > 0 ? plans[0].tier : '');
     setIsModalOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!selectedRoute) return;
+    if (!selectedProduct) return;
 
-    if (!requestNamespace.trim()) {
-      setError('namespace is required');
+    if (!selectedPlan) {
+      setError('please select a plan');
       return;
     }
 
@@ -147,13 +81,12 @@ export const BrowseAPIsTab: React.FC<BrowseAPIsTabProps> = ({
     setError('');
 
     const result = await createAccessRequest({
-      apiName: selectedRoute.metadata.name,
-      apiNamespace: selectedRoute.metadata.namespace,
+      apiProductName: selectedProduct.metadata?.name || '',
+      apiProductNamespace: selectedProduct.metadata?.namespace || '',
       planTier: selectedPlan,
       useCase: useCase.trim() || undefined,
       userId,
       userEmail,
-      requestNamespace: requestNamespace.trim(),
     });
 
     setSubmitting(false);
@@ -166,21 +99,43 @@ export const BrowseAPIsTab: React.FC<BrowseAPIsTabProps> = ({
     }
   };
 
-  const columns = ['Name', 'Namespace', 'Hostnames', 'Gateway', 'Actions'];
+  const formatLimits = (plan: Plan): string => {
+    const parts: string[] = [];
+    if (plan.limits?.daily) parts.push(`${plan.limits.daily.toLocaleString()}/day`);
+    if (plan.limits?.weekly) parts.push(`${plan.limits.weekly.toLocaleString()}/week`);
+    if (plan.limits?.monthly) parts.push(`${plan.limits.monthly.toLocaleString()}/month`);
+    if (plan.limits?.yearly) parts.push(`${plan.limits.yearly.toLocaleString()}/year`);
+    return parts.length > 0 ? parts.join(', ') : 'custom limits';
+  };
 
-  const rows = routesWithPlans.map((route) => {
-    const gateway = route.spec.parentRefs?.[0]?.name || 'none';
-    const hostnames = route.spec.hostnames?.join(', ') || 'none';
+  const columns = ['Name', 'Description', 'Version', 'Tags', 'Actions'];
+
+  const rows = publishedProducts.map((product) => {
+    const tags = product.spec.tags || [];
 
     return {
       cells: [
-        route.metadata.name,
-        route.metadata.namespace,
-        hostnames,
-        gateway,
+        product.spec.displayName || product.metadata?.name,
+        product.spec.description || '-',
+        product.spec.version || '-',
+        {
+          title:
+            tags.length > 0 ? (
+              <LabelGroup>
+                {tags.slice(0, 3).map((tag) => (
+                  <Label key={tag} isCompact>
+                    {tag}
+                  </Label>
+                ))}
+                {tags.length > 3 && <Label isCompact>+{tags.length - 3}</Label>}
+              </LabelGroup>
+            ) : (
+              '-'
+            ),
+        },
         {
           title: (
-            <Button variant="primary" onClick={() => handleRequestAccess(route)}>
+            <Button variant="primary" onClick={() => handleRequestAccess(product)}>
               {t('Request Access')}
             </Button>
           ),
@@ -189,22 +144,21 @@ export const BrowseAPIsTab: React.FC<BrowseAPIsTabProps> = ({
     };
   });
 
-  const selectedPolicy = selectedRoute ? getPlanPolicyForRoute(selectedRoute) : null;
-  const availablePlans = selectedPolicy?.spec.plans || [];
+  const availablePlans = selectedProduct?.status?.discoveredPlans || [];
 
-  if (routesError) {
+  if (productsError) {
     return <Alert variant="danger" title={t('Error loading APIs')} />;
   }
 
-  if (!routesLoaded || !policiesLoaded) {
+  if (!productsLoaded) {
     return <div>{t('Loading...')}</div>;
   }
 
-  if (routesWithPlans.length === 0) {
+  if (publishedProducts.length === 0) {
     return (
       <EmptyState icon={CubesIcon} titleText={t('No APIs Available')}>
         <EmptyStateBody>
-          {t('There are no APIs with plan policies configured. Contact your administrator.')}
+          {t('There are no published APIs available. Contact your administrator.')}
         </EmptyStateBody>
       </EmptyState>
     );
@@ -228,80 +182,48 @@ export const BrowseAPIsTab: React.FC<BrowseAPIsTabProps> = ({
         <ModalBody>
           <Form>
             <FormGroup label={t('API')} isRequired>
-              <Content>{selectedRoute?.metadata.name}</Content>
-            </FormGroup>
-
-            <FormGroup label={t('Plan Tier')} isRequired>
-              <FormSelect
-                value={selectedPlan}
-                onChange={(_event, value) => setSelectedPlan(value as PlanTier)}
-              >
-                {availablePlans.map((plan) => {
-                  const limitParts = [];
-                  if (plan.limits?.daily) limitParts.push(`${plan.limits.daily.toLocaleString()}/day`);
-                  if (plan.limits?.weekly) limitParts.push(`${plan.limits.weekly.toLocaleString()}/week`);
-                  if (plan.limits?.monthly) limitParts.push(`${plan.limits.monthly.toLocaleString()}/month`);
-                  const limitText = limitParts.length > 0 ? limitParts.join(', ') : 'custom limits';
-
-                  return (
-                    <FormSelectOption
-                      key={plan.tier}
-                      value={plan.tier}
-                      label={`${plan.tier} (${limitText})`}
-                    />
-                  );
-                })}
-              </FormSelect>
-              {availablePlans.find(p => p.tier === selectedPlan) && (
+              <Content>
+                {selectedProduct?.spec.displayName || selectedProduct?.metadata?.name}
+              </Content>
+              {selectedProduct?.spec.description && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>
-                      {availablePlans.find(p => p.tier === selectedPlan)?.description ||
-                       t('Rate limits: ') +
-                       [
-                         availablePlans.find(p => p.tier === selectedPlan)?.limits?.daily &&
-                           `${availablePlans.find(p => p.tier === selectedPlan)?.limits.daily.toLocaleString()} requests/day`,
-                         availablePlans.find(p => p.tier === selectedPlan)?.limits?.weekly &&
-                           `${availablePlans.find(p => p.tier === selectedPlan)?.limits.weekly.toLocaleString()} requests/week`,
-                         availablePlans.find(p => p.tier === selectedPlan)?.limits?.monthly &&
-                           `${availablePlans.find(p => p.tier === selectedPlan)?.limits.monthly.toLocaleString()} requests/month`
-                       ].filter(Boolean).join(', ')
-                      }
-                    </HelperTextItem>
+                    <HelperTextItem>{selectedProduct.spec.description}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
 
-            <FormGroup label={t('Request Namespace')} isRequired>
-              <FormSelect
-                value={requestNamespace}
-                onChange={(_event, value) => setRequestNamespace(value)}
-                isDisabled={!namespacesLoaded}
-              >
-                {!requestNamespace && (
-                  <FormSelectOption key="placeholder" value="" label={t('Select namespace...')} />
-                )}
-                {namespacesLoaded &&
-                  namespaces
-                    .sort((a, b) => a.metadata.name.localeCompare(b.metadata.name))
-                    .map((ns) => (
+            <FormGroup label={t('Plan Tier')} isRequired>
+              {availablePlans.length > 0 ? (
+                <>
+                  <FormSelect
+                    value={selectedPlan}
+                    onChange={(_event, value) => setSelectedPlan(value)}
+                  >
+                    {availablePlans.map((plan) => (
                       <FormSelectOption
-                        key={ns.metadata.name}
-                        value={ns.metadata.name}
-                        label={ns.metadata.name}
+                        key={plan.tier}
+                        value={plan.tier}
+                        label={`${plan.tier} (${formatLimits(plan)})`}
                       />
                     ))}
-              </FormSelect>
-              <FormHelperText>
-                <HelperText>
-                  <HelperTextItem>
-                    {t(
-                      'The namespace where your API key request will be created. You must have permission to create ConfigMaps in this namespace.',
-                    )}
-                  </HelperTextItem>
-                </HelperText>
-              </FormHelperText>
+                  </FormSelect>
+                  {availablePlans.find((p) => p.tier === selectedPlan)?.description && (
+                    <FormHelperText>
+                      <HelperText>
+                        <HelperTextItem>
+                          {availablePlans.find((p) => p.tier === selectedPlan)?.description}
+                        </HelperTextItem>
+                      </HelperText>
+                    </FormHelperText>
+                  )}
+                </>
+              ) : (
+                <Alert variant="warning" isInline title={t('No plans available')}>
+                  {t('This API has no rate limit plans configured.')}
+                </Alert>
+              )}
             </FormGroup>
 
             <FormGroup label={t('Use Case')}>
@@ -321,7 +243,7 @@ export const BrowseAPIsTab: React.FC<BrowseAPIsTabProps> = ({
             key="submit"
             variant="primary"
             onClick={handleSubmit}
-            isDisabled={submitting}
+            isDisabled={submitting || availablePlans.length === 0}
             isLoading={submitting}
           >
             {t('Submit Request')}

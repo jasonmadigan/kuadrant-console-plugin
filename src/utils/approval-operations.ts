@@ -1,84 +1,39 @@
-import { k8sCreate, k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
-import { createApiKeySecret } from './api-key-utils';
-import { ApiKeyRequest, APIKeyRequestGVK } from '../types/api-management';
-
-const SecretModel = {
-  apiVersion: 'v1',
-  kind: 'Secret',
-  plural: 'secrets',
-  abbr: 'secret',
-  label: 'Secret',
-  labelPlural: 'Secrets',
-  namespaced: true,
-};
-
-const APIKeyRequestModel = {
-  apiGroup: APIKeyRequestGVK.group,
-  apiVersion: APIKeyRequestGVK.version,
-  kind: APIKeyRequestGVK.kind,
-  plural: 'apikeyrequests',
-  abbr: 'akr',
-  label: 'APIKeyRequest',
-  labelPlural: 'APIKeyRequests',
-  namespaced: true,
-};
+import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
+import { APIKey, APIKeyModel } from '../types/api-management';
 
 export interface ApproveRequestParams {
-  request: ApiKeyRequest;
+  request: APIKey;
   reviewedBy: string;
-  comment?: string;
 }
 
+// approve an API key request - controller handles secret creation
 export const approveRequest = async (
   params: ApproveRequestParams,
-): Promise<{ success: boolean; error?: string; secretName?: string }> => {
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { request, reviewedBy, comment } = params;
-    const { userId } = request.spec.requestedBy;
-    const { apiName, apiNamespace, planTier } = request.spec;
+    const { request, reviewedBy } = params;
 
-    // generate and create api key secret
-    const secret = createApiKeySecret(userId, apiName, apiNamespace, planTier);
-
-    await k8sCreate({
-      model: SecretModel,
-      data: secret,
-      ns: apiNamespace,
-    });
-
-    // extract the plain-text api key from the secret
-    const apiKeyBase64 = secret.data?.api_key || '';
-    const apiKey = atob(apiKeyBase64);
-
-    // update status to approved and add api metadata
-    // note: this is a status subresource update
     const patches = [
       {
         op: request.status ? 'replace' : 'add',
         path: '/status',
         value: {
+          ...request.status,
           phase: 'Approved',
           reviewedBy,
           reviewedAt: new Date().toISOString(),
-          reason: comment || 'approved',
-          apiKey,
-          // TODO: fetch API metadata from HTTPRoute or ConfigMap
-          // for now, use placeholder values
-          apiHostname: `${apiName}.apps.example.com`,
-          apiBasePath: '/api/v1',
-          apiDescription: `${apiName} API`,
         },
       },
     ];
 
     await k8sPatch({
-      model: APIKeyRequestModel,
+      model: APIKeyModel,
       resource: request,
       data: patches,
-      path: 'status', // patch the status subresource
+      path: 'status',
     });
 
-    return { success: true, secretName: secret.metadata.name };
+    return { success: true };
   } catch (error) {
     console.error('error approving request:', error);
     return {
@@ -89,18 +44,18 @@ export const approveRequest = async (
 };
 
 export interface RejectRequestParams {
-  request: ApiKeyRequest;
+  request: APIKey;
   reviewedBy: string;
-  comment: string;
+  reason: string;
 }
 
 export const rejectRequest = async (
   params: RejectRequestParams,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { request, reviewedBy, comment } = params;
+    const { request, reviewedBy, reason } = params;
 
-    if (!comment || comment.trim().length === 0) {
+    if (!reason || reason.trim().length === 0) {
       return { success: false, error: 'rejection reason is required' };
     }
 
@@ -109,19 +64,19 @@ export const rejectRequest = async (
         op: request.status ? 'replace' : 'add',
         path: '/status',
         value: {
+          ...request.status,
           phase: 'Rejected',
           reviewedBy,
           reviewedAt: new Date().toISOString(),
-          reason: comment.trim(),
         },
       },
     ];
 
     await k8sPatch({
-      model: APIKeyRequestModel,
+      model: APIKeyModel,
       resource: request,
       data: patches,
-      path: 'status', // patch the status subresource
+      path: 'status',
     });
 
     return { success: true };
@@ -132,4 +87,63 @@ export const rejectRequest = async (
       error: error instanceof Error ? error.message : 'unknown error',
     };
   }
+};
+
+// bulk approve multiple requests
+export const bulkApproveRequests = async (
+  requests: APIKey[],
+  reviewedBy: string,
+): Promise<{ success: number; failed: number; errors: string[] }> => {
+  const results = await Promise.allSettled(
+    requests.map((request) => approveRequest({ request, reviewedBy })),
+  );
+
+  const errors: string[] = [];
+  let success = 0;
+  let failed = 0;
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value.success) {
+      success++;
+    } else {
+      failed++;
+      const errorMsg =
+        result.status === 'rejected'
+          ? result.reason?.message || 'unknown error'
+          : result.value.error || 'unknown error';
+      errors.push(`${requests[index].metadata?.name}: ${errorMsg}`);
+    }
+  });
+
+  return { success, failed, errors };
+};
+
+// bulk reject multiple requests
+export const bulkRejectRequests = async (
+  requests: APIKey[],
+  reviewedBy: string,
+  reason: string,
+): Promise<{ success: number; failed: number; errors: string[] }> => {
+  const results = await Promise.allSettled(
+    requests.map((request) => rejectRequest({ request, reviewedBy, reason })),
+  );
+
+  const errors: string[] = [];
+  let success = 0;
+  let failed = 0;
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value.success) {
+      success++;
+    } else {
+      failed++;
+      const errorMsg =
+        result.status === 'rejected'
+          ? result.reason?.message || 'unknown error'
+          : result.value.error || 'unknown error';
+      errors.push(`${requests[index].metadata?.name}: ${errorMsg}`);
+    }
+  });
+
+  return { success, failed, errors };
 };

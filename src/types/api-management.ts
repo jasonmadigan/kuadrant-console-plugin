@@ -1,67 +1,50 @@
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 
-export type PlanTier = 'gold' | 'silver' | 'bronze';
-
 export type RequestPhase = 'Pending' | 'Approved' | 'Rejected';
-
-// api key secret stored in api namespace
-export interface ApiKeySecret extends K8sResourceCommon {
-  type?: string; // e.g. 'Opaque'
-  data: {
-    api_key: string; // base64-encoded 64-char hex
-  };
-  metadata: {
-    name: string;
-    namespace: string;
-    labels?: {
-      app?: string; // matches AuthPolicy selector
-      'authorino.kuadrant.io/managed-by'?: string; // authorino label
-      [key: string]: string | undefined; // allow additional labels
-    };
-    annotations?: {
-      'secret.kuadrant.io/plan-id'?: string;
-      'secret.kuadrant.io/user-id'?: string;
-      [key: string]: string | undefined; // allow additional annotations
-    };
-    creationTimestamp?: string;
-  };
-}
-
-// api key request CR (extensions.kuadrant.io/v1alpha1)
-export interface APIKeyRequestSpec {
-  apiName: string;
-  apiNamespace: string;
-  planTier: PlanTier;
-  useCase?: string;
-  requestedBy: {
-    userId: string;
-    email: string;
-  };
-  requestedAt?: string;
-}
 
 export interface PlanLimits {
   daily?: number;
   weekly?: number;
   monthly?: number;
+  yearly?: number;
   custom?: Array<{
     limit: number;
     window: string;
   }>;
 }
 
-export interface APIKeyRequestStatus {
+// plan definition within PlanPolicy or APIProduct status
+export interface Plan {
+  tier: string;
+  description?: string;
+  limits?: PlanLimits;
+}
+
+// APIKey spec - references an APIProduct
+export interface APIKeySpec {
+  apiProductRef: {
+    name: string;
+  };
+  planTier: string;
+  useCase?: string;
+  requestedBy: {
+    userId: string;
+    email?: string;
+  };
+}
+
+// APIKey status - managed by controller
+export interface APIKeyStatus {
   phase?: RequestPhase;
   reviewedBy?: string;
   reviewedAt?: string;
-  reason?: string;
-  apiKey?: string;
   apiHostname?: string;
-  apiBasePath?: string;
-  apiDescription?: string;
-  apiOasUrl?: string;
-  apiOasUiUrl?: string;
-  planLimits?: PlanLimits;
+  limits?: PlanLimits;
+  secretRef?: {
+    name: string;
+    key: string;
+  };
+  canReadSecret?: boolean;
   conditions?: Array<{
     type: string;
     status: 'True' | 'False' | 'Unknown';
@@ -71,93 +54,98 @@ export interface APIKeyRequestStatus {
   }>;
 }
 
-export interface ApiKeyRequest extends K8sResourceCommon {
-  apiVersion: 'extensions.kuadrant.io/v1alpha1';
-  kind: 'APIKeyRequest';
-  spec: APIKeyRequestSpec;
-  status?: APIKeyRequestStatus;
+// APIKey CR - devportal.kuadrant.io/v1alpha1
+export interface APIKey extends K8sResourceCommon {
+  apiVersion: 'devportal.kuadrant.io/v1alpha1';
+  kind: 'APIKey';
+  spec: APIKeySpec;
+  status?: APIKeyStatus;
 }
 
-// legacy configmap interface (deprecated, remove after migration)
-export interface ApiKeyRequestConfigMap extends K8sResourceCommon {
-  data: {
-    userId: string;
-    userEmail: string;
-    apiName: string;
-    apiNamespace: string;
-    planTier: string;
-    useCase: string;
-    requestedAt: string;
-    reviewedBy?: string;
-    reviewedAt?: string;
-    reviewComment?: string;
-    secretName?: string;
-    apiKey?: string;
-    apiHostname?: string;
-    apiBasePath?: string;
-    apiDescription?: string;
-    apiOasUrl?: string;
-    apiOasUiUrl?: string;
-  };
-  metadata: {
+// APIProduct spec - wraps an HTTPRoute with metadata
+export interface APIProductSpec {
+  displayName: string;
+  description?: string;
+  version?: string;
+  tags?: string[];
+  targetRef: {
+    group: string;
+    kind: string;
     name: string;
-    namespace: string;
-    labels: {
-      'kuadrant.io/request-type': 'api-key';
-      'kuadrant.io/status': string;
-    };
-    annotations?: {
-      'request.kuadrant.io/user-id': string;
-      [key: string]: string | undefined;
-    };
+  };
+  approvalMode: 'automatic' | 'manual';
+  publishStatus: 'Draft' | 'Published';
+  documentation?: {
+    openAPISpecURL?: string;
+    swaggerUI?: string;
+    docsURL?: string;
+    gitRepository?: string;
+  };
+  contact?: {
+    team?: string;
+    email?: string;
+    slack?: string;
+    url?: string;
   };
 }
 
-// annotations used throughout
-export const ANNOTATION_PLAN_ID = 'secret.kuadrant.io/plan-id';
-export const ANNOTATION_USER_ID = 'secret.kuadrant.io/user-id';
+// APIProduct status - populated by controller
+export interface APIProductStatus {
+  observedGeneration?: number;
+  discoveredPlans?: Plan[];
+  openapi?: {
+    raw: string;
+    lastSyncTime: string;
+  };
+  conditions?: Array<{
+    type: string;
+    status: 'True' | 'False' | 'Unknown';
+    reason?: string;
+    message?: string;
+    lastTransitionTime?: string;
+  }>;
+}
 
-// labels used for configmaps (legacy)
-export const LABEL_REQUEST_TYPE = 'kuadrant.io/request-type';
-export const LABEL_STATUS = 'kuadrant.io/status';
+// APIProduct CR - devportal.kuadrant.io/v1alpha1
+export interface APIProduct extends K8sResourceCommon {
+  apiVersion: 'devportal.kuadrant.io/v1alpha1';
+  kind: 'APIProduct';
+  spec: APIProductSpec;
+  status?: APIProductStatus;
+}
 
-// api key request gvk
-export const APIKeyRequestGVK = {
-  group: 'extensions.kuadrant.io',
+// GVK constants
+export const APIKeyGVK = {
+  group: 'devportal.kuadrant.io',
   version: 'v1alpha1',
-  kind: 'APIKeyRequest',
+  kind: 'APIKey',
 };
 
-// api metadata configmap stored in kuadrant-system (admin-accessible)
-// represents a published api that users can request access to
-// approvers copy relevant fields into ApiKeyRequest on approval
-export interface ApiMetadata extends K8sResourceCommon {
-  data: {
-    name: string; // display name
-    description: string; // human-readable description
-    hostname: string; // e.g. petstore.apps.example.com
-    basePath?: string; // e.g. /api/v1
-    oasUrl?: string; // openapi spec json/yaml url
-    oasUiUrl?: string; // swagger ui or similar
-  };
-  metadata: {
-    name: string;
-    namespace: string; // always kuadrant-system
-    labels: {
-      'kuadrant.io/api': 'true';
-      'kuadrant.io/httproute-name'?: string; // source httproute
-      'kuadrant.io/httproute-namespace'?: string;
-    };
-    annotations?: {
-      'api.kuadrant.io/auth-scheme'?: string; // e.g. 'api-key', 'oauth2'
-      [key: string]: string | undefined;
-    };
-  };
-}
+export const APIProductGVK = {
+  group: 'devportal.kuadrant.io',
+  version: 'v1alpha1',
+  kind: 'APIProduct',
+};
 
-// constants
-export const KUADRANT_SYSTEM_NS = 'kuadrant-system'; // for kuadrant resources and api metadata
-export const API_REQUESTS_NS = 'api-requests'; // for consumer requests and approved keys
-export const API_KEY_REQUEST_PREFIX = 'api-key-request-';
-export const LABEL_API = 'kuadrant.io/api';
-export const ANNOTATION_REQUEST_USER_ID = 'request.kuadrant.io/user-id';
+// model for k8s operations
+export const APIKeyModel = {
+  apiGroup: APIKeyGVK.group,
+  apiVersion: APIKeyGVK.version,
+  kind: APIKeyGVK.kind,
+  plural: 'apikeys',
+  abbr: 'ak',
+  label: 'APIKey',
+  labelPlural: 'APIKeys',
+  namespaced: true,
+};
+
+export const APIProductModel = {
+  apiGroup: APIProductGVK.group,
+  apiVersion: APIProductGVK.version,
+  kind: APIProductGVK.kind,
+  plural: 'apiproducts',
+  abbr: 'ap',
+  label: 'APIProduct',
+  labelPlural: 'APIProducts',
+  namespaced: true,
+};
