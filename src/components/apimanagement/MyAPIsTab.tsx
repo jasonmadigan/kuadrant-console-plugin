@@ -1,333 +1,46 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
 import {
+  Button,
   EmptyState,
   EmptyStateBody,
-  Alert,
-  Card,
-  CardBody,
-  CardTitle,
-  Title,
-  Content,
   Label,
-  Button,
-  ExpandableSection,
-  Grid,
-  GridItem,
-  Tab,
-  Tabs,
-  TabTitleText,
+  LabelGroup,
+  Alert,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Form,
+  FormGroup,
+  TextInput,
+  TextArea,
+  FormSelect,
+  FormSelectOption,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
+  MenuToggle,
+  MenuToggleElement,
 } from '@patternfly/react-core';
+import { CubeIcon, EllipsisVIcon, PlusCircleIcon } from '@patternfly/react-icons';
 import {
-  CubeIcon,
-  ExternalLinkAltIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  CopyIcon,
-} from '@patternfly/react-icons';
-import { useK8sWatchResource, useActiveNamespace } from '@openshift-console/dynamic-plugin-sdk';
-import { ApiKeyRequest, APIKeyRequestGVK } from '../../types/api-management';
-import { filterRequestsByUser } from '../../utils/api-key-utils';
-import { SyntaxHighlightedCode } from './SyntaxHighlightedCode';
-import './MyAPIsTab.css';
+  useK8sWatchResource,
+  k8sCreate,
+  k8sPatch,
+  k8sDelete,
+  K8sResourceCommon,
+} from '@openshift-console/dynamic-plugin-sdk';
+import { APIProduct, APIProductGVK, APIProductModel } from '../../types/api-management';
+import resourceGVKMapping from '../../utils/resources';
 
-interface ApiCardProps {
-  request: ApiKeyRequest;
-  isKeyRevealed: boolean;
-  onToggleReveal: (requestName: string) => void;
-}
-
-const ApiCard: React.FC<ApiCardProps> = ({ request, isKeyRevealed, onToggleReveal }) => {
-  const { t } = useTranslation('plugin__kuadrant-console-plugin');
-  const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
-  const [copiedKey, setCopiedKey] = React.useState(false);
-  const [copiedCode, setCopiedCode] = React.useState<string | null>(null);
-
-  const apiKey = request.status?.apiKey || '';
-  const displayKey = isKeyRevealed ? apiKey : '••••••••••••••••';
-  const baseUrl = `https://${request.status?.apiHostname}${request.status?.apiBasePath || ''}`;
-  const planTier = request.spec.planTier;
-
-  const copyToClipboard = (text: string, type: 'key' | 'code') => {
-    navigator.clipboard.writeText(text);
-    if (type === 'key') {
-      setCopiedKey(true);
-      setTimeout(() => setCopiedKey(false), 2000);
-    } else {
-      setCopiedCode(text);
-      setTimeout(() => setCopiedCode(null), 2000);
-    }
+interface HTTPRoute extends K8sResourceCommon {
+  spec: {
+    parentRefs?: Array<{ name: string; namespace?: string }>;
+    hostnames?: string[];
   };
-
-  const curlExample = `curl -H "Authorization: APIKEY ${apiKey}" \\
-  ${baseUrl}/your-endpoint`;
-
-  const jsExample = `fetch('${baseUrl}/your-endpoint', {
-  headers: {
-    'Authorization': 'APIKEY ${apiKey}'
-  }
-});`;
-
-  const pythonExample = `import requests
-
-response = requests.get(
-  '${baseUrl}/your-endpoint',
-  headers={'Authorization': 'APIKEY ${apiKey}'}
-)`;
-
-  const goExample = `package main
-
-import (
-  "net/http"
-)
-
-func main() {
-  req, _ := http.NewRequest("GET", "${baseUrl}/your-endpoint", nil)
-  req.Header.Add("Authorization", "APIKEY ${apiKey}")
-  client := &http.Client{}
-  resp, _ := client.Do(req)
-}`;
-
-  return (
-    <GridItem key={request.metadata.name} span={12} lg={6}>
-      <Card isFullHeight className="kuadrant-api-card">
-        <CardTitle>
-          <div
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-          >
-            <Title headingLevel="h3" size="lg">
-              {request.spec.apiName}
-            </Title>
-            <Label
-              color={
-                planTier === 'gold' ? 'yellow' : planTier === 'silver' ? 'grey' : 'orange'
-              }
-            >
-              {planTier}
-            </Label>
-          </div>
-        </CardTitle>
-        <CardBody>
-          {request.status?.apiDescription && (
-            <Content component="p" style={{ marginBottom: '16px' }}>
-              {request.status.apiDescription}
-            </Content>
-          )}
-
-          <div style={{ marginBottom: '16px' }}>
-            <strong>{t('Endpoint')}:</strong>
-            <br />
-            <code style={{ fontSize: '13px' }}>{baseUrl}</code>
-          </div>
-
-          {request.status?.planLimits && (
-            <div style={{ marginBottom: '16px' }}>
-              <strong>{t('Rate Limits')}:</strong>
-              <ul style={{ marginTop: '4px', marginBottom: 0 }}>
-                {request.status.planLimits.daily && (
-                  <li>{t('Daily')}: {request.status.planLimits.daily.toLocaleString()} requests</li>
-                )}
-                {request.status.planLimits.weekly && (
-                  <li>{t('Weekly')}: {request.status.planLimits.weekly.toLocaleString()} requests</li>
-                )}
-                {request.status.planLimits.monthly && (
-                  <li>{t('Monthly')}: {request.status.planLimits.monthly.toLocaleString()} requests</li>
-                )}
-                {request.status.planLimits.custom?.map((limit, idx) => (
-                  <li key={idx}>{limit.limit.toLocaleString()} requests per {limit.window}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {(request.status?.apiOasUrl || request.status?.apiOasUiUrl) && (
-            <div style={{ marginBottom: '16px' }}>
-              {request.status.apiOasUiUrl && (
-                <Button
-                  variant="link"
-                  isInline
-                  icon={<ExternalLinkAltIcon />}
-                  iconPosition="end"
-                  component="a"
-                  href={request.status.apiOasUiUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('View API Documentation')}
-                </Button>
-              )}
-              {request.status.apiOasUrl && (
-                <Button
-                  variant="link"
-                  isInline
-                  icon={<ExternalLinkAltIcon />}
-                  iconPosition="end"
-                  component="a"
-                  href={request.status.apiOasUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ marginLeft: '8px' }}
-                >
-                  {t('OpenAPI Spec')}
-                </Button>
-              )}
-            </div>
-          )}
-
-          <ExpandableSection toggleText={t('Show API Key & Examples')}>
-            <div style={{ marginTop: '8px' }}>
-              <strong>{t('Your API Key')}:</strong>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <code
-                  style={{
-                    fontSize: '12px',
-                    flex: 1,
-                    padding: '4px 8px',
-                    backgroundColor: 'var(--pf-v6-global--BackgroundColor--dark-100)',
-                    borderRadius: 'var(--pf-v6-global--BorderRadius--sm)',
-                  }}
-                >
-                  {displayKey}
-                </code>
-                <Button
-                  variant="plain"
-                  onClick={() => onToggleReveal(request.metadata.name)}
-                  aria-label={isKeyRevealed ? 'hide key' : 'show key'}
-                >
-                  {isKeyRevealed ? <EyeSlashIcon /> : <EyeIcon />}
-                </Button>
-                {isKeyRevealed && (
-                  <Button
-                    variant="plain"
-                    onClick={() => copyToClipboard(apiKey, 'key')}
-                    aria-label="copy api key"
-                  >
-                    <CopyIcon />
-                  </Button>
-                )}
-                {copiedKey && <span style={{ fontSize: '12px', color: 'var(--pf-v6-global--success-color--100)' }}>Copied!</span>}
-              </div>
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
-              <strong>{t('Code Examples')}:</strong>
-              <Tabs
-                activeKey={activeTabKey}
-                onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}
-                style={{ marginTop: '8px' }}
-              >
-                <Tab eventKey={0} title={<TabTitleText>cURL</TabTitleText>}>
-                  <div style={{ marginTop: '8px', position: 'relative' }}>
-                    <SyntaxHighlightedCode code={curlExample} language="bash" />
-                    <Button
-                      variant="plain"
-                      onClick={() => copyToClipboard(curlExample, 'code')}
-                      aria-label="copy code"
-                      style={{ position: 'absolute', top: '8px', right: '8px' }}
-                    >
-                      <CopyIcon />
-                    </Button>
-                    {copiedCode === curlExample && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '40px',
-                          fontSize: '12px',
-                          color: 'var(--pf-v6-global--success-color--100)',
-                        }}
-                      >
-                        Copied!
-                      </span>
-                    )}
-                  </div>
-                </Tab>
-                <Tab eventKey={1} title={<TabTitleText>JavaScript</TabTitleText>}>
-                  <div style={{ marginTop: '8px', position: 'relative' }}>
-                    <SyntaxHighlightedCode code={jsExample} language="javascript" />
-                    <Button
-                      variant="plain"
-                      onClick={() => copyToClipboard(jsExample, 'code')}
-                      aria-label="copy code"
-                      style={{ position: 'absolute', top: '8px', right: '8px' }}
-                    >
-                      <CopyIcon />
-                    </Button>
-                    {copiedCode === jsExample && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '40px',
-                          fontSize: '12px',
-                          color: 'var(--pf-v6-global--success-color--100)',
-                        }}
-                      >
-                        Copied!
-                      </span>
-                    )}
-                  </div>
-                </Tab>
-                <Tab eventKey={2} title={<TabTitleText>Python</TabTitleText>}>
-                  <div style={{ marginTop: '8px', position: 'relative' }}>
-                    <SyntaxHighlightedCode code={pythonExample} language="python" />
-                    <Button
-                      variant="plain"
-                      onClick={() => copyToClipboard(pythonExample, 'code')}
-                      aria-label="copy code"
-                      style={{ position: 'absolute', top: '8px', right: '8px' }}
-                    >
-                      <CopyIcon />
-                    </Button>
-                    {copiedCode === pythonExample && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '40px',
-                          fontSize: '12px',
-                          color: 'var(--pf-v6-global--success-color--100)',
-                        }}
-                      >
-                        Copied!
-                      </span>
-                    )}
-                  </div>
-                </Tab>
-                <Tab eventKey={3} title={<TabTitleText>Go</TabTitleText>}>
-                  <div style={{ marginTop: '8px', position: 'relative' }}>
-                    <SyntaxHighlightedCode code={goExample} language="go" />
-                    <Button
-                      variant="plain"
-                      onClick={() => copyToClipboard(goExample, 'code')}
-                      aria-label="copy code"
-                      style={{ position: 'absolute', top: '8px', right: '8px' }}
-                    >
-                      <CopyIcon />
-                    </Button>
-                    {copiedCode === goExample && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '40px',
-                          fontSize: '12px',
-                          color: 'var(--pf-v6-global--success-color--100)',
-                        }}
-                      >
-                        Copied!
-                      </span>
-                    )}
-                  </div>
-                </Tab>
-              </Tabs>
-            </div>
-          </ExpandableSection>
-        </CardBody>
-      </Card>
-    </GridItem>
-  );
-};
+}
 
 interface MyAPIsTabProps {
   userId: string;
@@ -335,75 +48,549 @@ interface MyAPIsTabProps {
 
 export const MyAPIsTab: React.FC<MyAPIsTabProps> = ({ userId }) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
-  const [activeNamespace] = useActiveNamespace();
-  const [revealedKeys, setRevealedKeys] = React.useState<Set<string>>(new Set());
+  const [createModalOpen, setCreateModalOpen] = React.useState(false);
+  const [editModalOpen, setEditModalOpen] = React.useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+  const [selectedProduct, setSelectedProduct] = React.useState<APIProduct | null>(null);
+  const [error, setError] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+  const [openDropdownId, setOpenDropdownId] = React.useState<string | null>(null);
 
-  // watch APIKeyRequest CRs in active namespace
-  const watchNamespace = activeNamespace === '#ALL_NS#' ? undefined : activeNamespace;
-
-  const [requests, requestsLoaded, requestsError] = useK8sWatchResource<ApiKeyRequest[]>({
-    groupVersionKind: APIKeyRequestGVK,
-    isList: true,
-    namespace: watchNamespace,
+  // form state
+  const [formData, setFormData] = React.useState({
+    name: '',
+    displayName: '',
+    description: '',
+    version: 'v1',
+    targetHttpRoute: '',
+    targetNamespace: '',
+    approvalMode: 'manual' as 'manual' | 'automatic',
+    publishStatus: 'Draft' as 'Draft' | 'Published',
+    tags: '',
+    contactTeam: '',
+    contactEmail: '',
   });
 
-  // filter to user's approved requests with api metadata populated
-  const approvedApis = React.useMemo(() => {
-    if (!requestsLoaded) return [];
-    const userRequests = filterRequestsByUser(requests, userId);
-    // only show approved requests that have api metadata populated
-    return userRequests.filter(
-      (req) =>
-        req.status?.phase === 'Approved' && req.status?.apiKey && req.status?.apiHostname,
-    );
-  }, [requests, requestsLoaded, userId]);
+  // watch APIProducts
+  const [products, productsLoaded, productsError] = useK8sWatchResource<APIProduct[]>({
+    groupVersionKind: APIProductGVK,
+    isList: true,
+    namespaced: false,
+  });
 
-  const toggleReveal = (requestName: string) => {
-    setRevealedKeys((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(requestName)) {
-        newSet.delete(requestName);
-      } else {
-        newSet.add(requestName);
-      }
-      return newSet;
+  // watch HTTPRoutes for target selection
+  const [httpRoutes, httpRoutesLoaded] = useK8sWatchResource<HTTPRoute[]>({
+    groupVersionKind: resourceGVKMapping.HTTPRoute,
+    isList: true,
+    namespaced: false,
+  });
+
+  // filter to user's products (by creator annotation or ownership)
+  const myProducts = React.useMemo(() => {
+    if (!productsLoaded || !products) return [];
+    return products.filter((p) => {
+      const owner = p.metadata?.annotations?.['kuadrant.io/created-by'];
+      return owner === userId;
     });
+  }, [products, productsLoaded, userId]);
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      displayName: '',
+      description: '',
+      version: 'v1',
+      targetHttpRoute: '',
+      targetNamespace: '',
+      approvalMode: 'manual',
+      publishStatus: 'Draft',
+      tags: '',
+      contactTeam: '',
+      contactEmail: '',
+    });
+    setError('');
   };
 
-  if (requestsError) {
-    return (
-      <Alert variant="danger" title={t('Error loading APIs')} isInline>
-        {requestsError.message}
-      </Alert>
-    );
+  const handleCreate = async () => {
+    if (!formData.name || !formData.displayName || !formData.targetHttpRoute) {
+      setError('name, display name, and target HTTPRoute are required');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const apiProduct: APIProduct = {
+        apiVersion: 'devportal.kuadrant.io/v1alpha1',
+        kind: 'APIProduct',
+        metadata: {
+          name: formData.name,
+          namespace: formData.targetNamespace,
+          annotations: {
+            'kuadrant.io/created-by': userId,
+          },
+        },
+        spec: {
+          displayName: formData.displayName,
+          description: formData.description || undefined,
+          version: formData.version || undefined,
+          targetRef: {
+            group: 'gateway.networking.k8s.io',
+            kind: 'HTTPRoute',
+            name: formData.targetHttpRoute,
+          },
+          approvalMode: formData.approvalMode,
+          publishStatus: formData.publishStatus,
+          tags: formData.tags
+            ? formData.tags
+                .split(',')
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : undefined,
+          contact:
+            formData.contactTeam || formData.contactEmail
+              ? {
+                  team: formData.contactTeam || undefined,
+                  email: formData.contactEmail || undefined,
+                }
+              : undefined,
+        },
+      };
+
+      await k8sCreate({ model: APIProductModel, data: apiProduct });
+      setCreateModalOpen(false);
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to create API product');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!selectedProduct) return;
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const patches = [
+        { op: 'replace', path: '/spec/displayName', value: formData.displayName },
+        { op: 'replace', path: '/spec/description', value: formData.description || '' },
+        { op: 'replace', path: '/spec/version', value: formData.version || '' },
+        { op: 'replace', path: '/spec/approvalMode', value: formData.approvalMode },
+        { op: 'replace', path: '/spec/publishStatus', value: formData.publishStatus },
+        {
+          op: 'replace',
+          path: '/spec/tags',
+          value: formData.tags
+            ? formData.tags
+                .split(',')
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : [],
+        },
+      ];
+
+      await k8sPatch({ model: APIProductModel, resource: selectedProduct, data: patches });
+      setEditModalOpen(false);
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to update API product');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedProduct) return;
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      await k8sDelete({ model: APIProductModel, resource: selectedProduct });
+      setDeleteModalOpen(false);
+      setSelectedProduct(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to delete API product');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (product: APIProduct) => {
+    setSelectedProduct(product);
+    setFormData({
+      name: product.metadata?.name || '',
+      displayName: product.spec.displayName,
+      description: product.spec.description || '',
+      version: product.spec.version || 'v1',
+      targetHttpRoute: product.spec.targetRef.name,
+      targetNamespace: product.metadata?.namespace || '',
+      approvalMode: product.spec.approvalMode,
+      publishStatus: product.spec.publishStatus,
+      tags: product.spec.tags?.join(', ') || '',
+      contactTeam: product.spec.contact?.team || '',
+      contactEmail: product.spec.contact?.email || '',
+    });
+    setError('');
+    setEditModalOpen(true);
+    setOpenDropdownId(null);
+  };
+
+  const openDeleteModal = (product: APIProduct) => {
+    setSelectedProduct(product);
+    setError('');
+    setDeleteModalOpen(true);
+    setOpenDropdownId(null);
+  };
+
+  const columns = ['Name', 'Version', 'Status', 'Approval', 'Tags', 'Actions'];
+
+  const rows = myProducts.map((product) => {
+    const productId = `${product.metadata?.namespace}/${product.metadata?.name}`;
+    const tags = product.spec.tags || [];
+
+    return {
+      cells: [
+        {
+          title: (
+            <div>
+              <strong>{product.spec.displayName}</strong>
+              <div style={{ fontSize: '12px', color: 'var(--pf-v6-global--Color--200)' }}>
+                {product.metadata?.namespace}/{product.metadata?.name}
+              </div>
+            </div>
+          ),
+        },
+        product.spec.version || '-',
+        {
+          title: (
+            <Label color={product.spec.publishStatus === 'Published' ? 'green' : 'grey'}>
+              {product.spec.publishStatus}
+            </Label>
+          ),
+        },
+        {
+          title: (
+            <Label color={product.spec.approvalMode === 'automatic' ? 'blue' : 'orange'}>
+              {product.spec.approvalMode}
+            </Label>
+          ),
+        },
+        {
+          title:
+            tags.length > 0 ? (
+              <LabelGroup>
+                {tags.slice(0, 2).map((tag) => (
+                  <Label key={tag} isCompact>
+                    {tag}
+                  </Label>
+                ))}
+                {tags.length > 2 && <Label isCompact>+{tags.length - 2}</Label>}
+              </LabelGroup>
+            ) : (
+              '-'
+            ),
+        },
+        {
+          title: (
+            <Dropdown
+              isOpen={openDropdownId === productId}
+              onSelect={() => setOpenDropdownId(null)}
+              onOpenChange={(isOpen) => setOpenDropdownId(isOpen ? productId : null)}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  variant="plain"
+                  onClick={() => setOpenDropdownId(openDropdownId === productId ? null : productId)}
+                  isExpanded={openDropdownId === productId}
+                >
+                  <EllipsisVIcon />
+                </MenuToggle>
+              )}
+              popperProps={{ position: 'right' }}
+            >
+              <DropdownList>
+                <DropdownItem key="edit" onClick={() => openEditModal(product)}>
+                  {t('Edit')}
+                </DropdownItem>
+                <DropdownItem key="delete" onClick={() => openDeleteModal(product)}>
+                  {t('Delete')}
+                </DropdownItem>
+              </DropdownList>
+            </Dropdown>
+          ),
+        },
+      ],
+    };
+  });
+
+  if (productsError) {
+    return <Alert variant="danger" title={t('Error loading API products')} />;
   }
 
-  if (!requestsLoaded) {
+  if (!productsLoaded) {
     return <div>{t('Loading...')}</div>;
   }
 
-  if (approvedApis.length === 0) {
-    return (
-      <EmptyState icon={CubeIcon} titleText={t('No APIs')}>
-        <EmptyStateBody>
-          {t(
-            'You do not have access to any APIs yet. Visit the Browse APIs tab to request access.',
-          )}
-        </EmptyStateBody>
-      </EmptyState>
-    );
-  }
-
   return (
-    <Grid hasGutter>
-      {approvedApis.map((request) => (
-        <ApiCard
-          key={request.metadata.name}
-          request={request}
-          isKeyRevealed={revealedKeys.has(request.metadata.name)}
-          onToggleReveal={toggleReveal}
-        />
-      ))}
-    </Grid>
+    <>
+      <div style={{ marginBottom: '16px' }}>
+        <Button
+          variant="primary"
+          icon={<PlusCircleIcon />}
+          onClick={() => {
+            resetForm();
+            setCreateModalOpen(true);
+          }}
+        >
+          {t('Create API Product')}
+        </Button>
+      </div>
+
+      {myProducts.length === 0 ? (
+        <EmptyState icon={CubeIcon} titleText={t('No API Products')}>
+          <EmptyStateBody>
+            {t(
+              'You have not created any API products yet. Create one to publish an API for consumers.',
+            )}
+          </EmptyStateBody>
+        </EmptyState>
+      ) : (
+        <Table aria-label="My APIs table" variant="compact" cells={columns} rows={rows}>
+          <TableHeader />
+          <TableBody />
+        </Table>
+      )}
+
+      {/* Create Modal */}
+      <Modal
+        variant="medium"
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        aria-labelledby="create-api-modal"
+      >
+        <ModalHeader title={t('Create API Product')} />
+        <ModalBody>
+          <Form>
+            <FormGroup label={t('Name')} isRequired fieldId="name">
+              <TextInput
+                id="name"
+                value={formData.name}
+                onChange={(_e, v) => setFormData({ ...formData, name: v })}
+                placeholder="my-api"
+              />
+            </FormGroup>
+            <FormGroup label={t('Display Name')} isRequired fieldId="displayName">
+              <TextInput
+                id="displayName"
+                value={formData.displayName}
+                onChange={(_e, v) => setFormData({ ...formData, displayName: v })}
+                placeholder="My API"
+              />
+            </FormGroup>
+            <FormGroup label={t('Description')} fieldId="description">
+              <TextArea
+                id="description"
+                value={formData.description}
+                onChange={(_e, v) => setFormData({ ...formData, description: v })}
+                rows={3}
+              />
+            </FormGroup>
+            <FormGroup label={t('Target HTTPRoute')} isRequired fieldId="targetHttpRoute">
+              <FormSelect
+                id="targetHttpRoute"
+                value={`${formData.targetNamespace}/${formData.targetHttpRoute}`}
+                onChange={(_e, v) => {
+                  const [ns, name] = v.split('/');
+                  setFormData({ ...formData, targetNamespace: ns, targetHttpRoute: name });
+                }}
+              >
+                <FormSelectOption value="" label={t('Select an HTTPRoute...')} />
+                {httpRoutesLoaded &&
+                  httpRoutes?.map((route) => (
+                    <FormSelectOption
+                      key={`${route.metadata?.namespace}/${route.metadata?.name}`}
+                      value={`${route.metadata?.namespace}/${route.metadata?.name}`}
+                      label={`${route.metadata?.namespace}/${route.metadata?.name}`}
+                    />
+                  ))}
+              </FormSelect>
+            </FormGroup>
+            <FormGroup label={t('Version')} fieldId="version">
+              <TextInput
+                id="version"
+                value={formData.version}
+                onChange={(_e, v) => setFormData({ ...formData, version: v })}
+                placeholder="v1"
+              />
+            </FormGroup>
+            <FormGroup label={t('Approval Mode')} fieldId="approvalMode">
+              <FormSelect
+                id="approvalMode"
+                value={formData.approvalMode}
+                onChange={(_e, v) =>
+                  setFormData({ ...formData, approvalMode: v as 'manual' | 'automatic' })
+                }
+              >
+                <FormSelectOption value="manual" label={t('Manual')} />
+                <FormSelectOption value="automatic" label={t('Automatic')} />
+              </FormSelect>
+            </FormGroup>
+            <FormGroup label={t('Publish Status')} fieldId="publishStatus">
+              <FormSelect
+                id="publishStatus"
+                value={formData.publishStatus}
+                onChange={(_e, v) =>
+                  setFormData({ ...formData, publishStatus: v as 'Draft' | 'Published' })
+                }
+              >
+                <FormSelectOption value="Draft" label={t('Draft')} />
+                <FormSelectOption value="Published" label={t('Published')} />
+              </FormSelect>
+            </FormGroup>
+            <FormGroup label={t('Tags')} fieldId="tags">
+              <TextInput
+                id="tags"
+                value={formData.tags}
+                onChange={(_e, v) => setFormData({ ...formData, tags: v })}
+                placeholder="api, demo, v1"
+              />
+            </FormGroup>
+            {error && <Alert variant="danger" isInline title={error} />}
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="primary"
+            onClick={handleCreate}
+            isDisabled={submitting}
+            isLoading={submitting}
+          >
+            {t('Create')}
+          </Button>
+          <Button variant="link" onClick={() => setCreateModalOpen(false)}>
+            {t('Cancel')}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        variant="medium"
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        aria-labelledby="edit-api-modal"
+      >
+        <ModalHeader title={t('Edit API Product')} />
+        <ModalBody>
+          <Form>
+            <FormGroup label={t('Display Name')} isRequired fieldId="editDisplayName">
+              <TextInput
+                id="editDisplayName"
+                value={formData.displayName}
+                onChange={(_e, v) => setFormData({ ...formData, displayName: v })}
+              />
+            </FormGroup>
+            <FormGroup label={t('Description')} fieldId="editDescription">
+              <TextArea
+                id="editDescription"
+                value={formData.description}
+                onChange={(_e, v) => setFormData({ ...formData, description: v })}
+                rows={3}
+              />
+            </FormGroup>
+            <FormGroup label={t('Version')} fieldId="editVersion">
+              <TextInput
+                id="editVersion"
+                value={formData.version}
+                onChange={(_e, v) => setFormData({ ...formData, version: v })}
+              />
+            </FormGroup>
+            <FormGroup label={t('Approval Mode')} fieldId="editApprovalMode">
+              <FormSelect
+                id="editApprovalMode"
+                value={formData.approvalMode}
+                onChange={(_e, v) =>
+                  setFormData({ ...formData, approvalMode: v as 'manual' | 'automatic' })
+                }
+              >
+                <FormSelectOption value="manual" label={t('Manual')} />
+                <FormSelectOption value="automatic" label={t('Automatic')} />
+              </FormSelect>
+            </FormGroup>
+            <FormGroup label={t('Publish Status')} fieldId="editPublishStatus">
+              <FormSelect
+                id="editPublishStatus"
+                value={formData.publishStatus}
+                onChange={(_e, v) =>
+                  setFormData({ ...formData, publishStatus: v as 'Draft' | 'Published' })
+                }
+              >
+                <FormSelectOption value="Draft" label={t('Draft')} />
+                <FormSelectOption value="Published" label={t('Published')} />
+              </FormSelect>
+            </FormGroup>
+            <FormGroup label={t('Tags')} fieldId="editTags">
+              <TextInput
+                id="editTags"
+                value={formData.tags}
+                onChange={(_e, v) => setFormData({ ...formData, tags: v })}
+              />
+            </FormGroup>
+            {error && <Alert variant="danger" isInline title={error} />}
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="primary"
+            onClick={handleEdit}
+            isDisabled={submitting}
+            isLoading={submitting}
+          >
+            {t('Save')}
+          </Button>
+          <Button variant="link" onClick={() => setEditModalOpen(false)}>
+            {t('Cancel')}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Delete Modal */}
+      <Modal
+        variant="small"
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        aria-labelledby="delete-api-modal"
+      >
+        <ModalHeader title={t('Delete API Product')} />
+        <ModalBody>
+          <Alert variant="warning" isInline title={t('This action cannot be undone')}>
+            {t('Deleting this API product will also delete all associated API key requests.')}
+          </Alert>
+          <p style={{ marginTop: '16px' }}>
+            {t('Are you sure you want to delete')}{' '}
+            <strong>{selectedProduct?.spec.displayName}</strong>?
+          </p>
+          {error && <Alert variant="danger" isInline title={error} className="pf-v6-u-mt-md" />}
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            isDisabled={submitting}
+            isLoading={submitting}
+          >
+            {t('Delete')}
+          </Button>
+          <Button variant="link" onClick={() => setDeleteModalOpen(false)}>
+            {t('Cancel')}
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </>
   );
 };

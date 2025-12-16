@@ -8,7 +8,6 @@ export const getLandingPageURL: ResolvedExtension<Perspective>['properties']['la
   _isFirstVisit,
 ) => '/api-management/all-namespaces/browse';
 
-export const getImportRedirectURL: ResolvedExtension<
-  Perspective
->['properties']['importRedirectURL'] = (namespace) =>
-  namespace ? `/api-management/ns/${namespace}/browse` : '/api-management/all-namespaces/browse';
+export const getImportRedirectURL: ResolvedExtension<Perspective>['properties']['importRedirectURL'] =
+  (namespace) =>
+    namespace ? `/api-management/ns/${namespace}/browse` : '/api-management/all-namespaces/browse';

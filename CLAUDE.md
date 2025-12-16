@@ -51,8 +51,8 @@ The plugin manages these Custom Resource Definitions (CRDs):
 
 ### API Management Resources
 7. **PlanPolicy** (`extensions.kuadrant.io/v1alpha1`) - Rate limiting plans with tiers
-8. **APIProduct** (`extensions.kuadrant.io/v1alpha1`) - Published API catalog entries
-9. **APIKeyRequest** (`extensions.kuadrant.io/v1alpha1`) - Consumer requests for API access
+8. **APIProduct** (`devportal.kuadrant.io/v1alpha1`) - Published API catalog entries wrapping HTTPRoutes
+9. **APIKey** (`devportal.kuadrant.io/v1alpha1`) - Consumer API key requests and credentials
 
 ## Common Patterns
 
@@ -203,6 +203,37 @@ The API Management perspective uses a flattened navigation structure with indivi
 - Routes use `exact: false` to allow sub-paths to match the base route
 - Component re-renders when section changes via `key={currentSection}` on PageSection
 - Namespace switching preserves the current section in the URL
+
+### API Key Management Implementation
+
+The API management features use CRDs from the `developer-portal-controller` (separate repo). Key implementation details:
+
+**CRDs:**
+- `APIProduct` - wraps an HTTPRoute with metadata (displayName, description, approvalMode, contact, docs)
+- `APIKey` - represents a consumer's request for API access, transitions through Pending → Approved/Rejected
+
+**User Identity:**
+- `useCurrentUser` hook fetches from OpenShift User API (`/api/kubernetes/apis/user.openshift.io/v1/users/~`)
+- Never fall back to anonymous - show error if user identity unavailable
+
+**Show-once Secret Pattern:**
+- When APIKey is approved, controller creates a Secret with the actual key value
+- `status.canReadSecret` flag controls whether the key can be revealed
+- On reveal: fetch Secret, display value, then patch APIKey to set `canReadSecret: false`
+- Once revealed, the key value cannot be retrieved again (user must copy it immediately)
+
+**Key Files:**
+- `src/types/api-management.ts` - APIKey, APIProduct types and GVK constants
+- `src/utils/user-identity.ts` - useCurrentUser hook
+- `src/utils/secret-operations.ts` - show-once reveal logic
+- `src/utils/approval-operations.ts` - approve/reject with bulk support
+- `src/components/apimanagement/` - all tab components
+
+**Controller Dependency:**
+The `developer-portal-controller` handles:
+- Populating `discoveredPlans` on APIProduct status from PlanPolicy
+- Creating Secrets after APIKey approval
+- Managing the `canReadSecret` lifecycle
 
 ## Development Commands
 
