@@ -219,6 +219,12 @@ export const getGVK = (kind: ResourceKind): ResourceGVK => {
   return RESOURCES[kind].gvk;
 };
 
+// get apiVersion string (group/version) for a kind
+export const getApiVersion = (kind: ResourceKind): string => {
+  const gvk = RESOURCES[kind].gvk;
+  return `${gvk.group}/${gvk.version}`;
+};
+
 // get metadata for a kind
 export const getResourceMetadata = (kind: ResourceKind): ResourceMetadata => {
   return RESOURCES[kind];
