@@ -26,9 +26,6 @@ import {
   EmptyState,
   EmptyStateBody,
   Label,
-  Popover,
-  Progress,
-  ProgressMeasureLocation,
   Tooltip,
   Grid,
   GridItem,
@@ -40,22 +37,24 @@ import {
   ExternalLinkAltIcon,
   EllipsisVIcon,
   LockIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  BuildIcon,
-  UploadIcon,
-  QuestionCircleIcon,
 } from '@patternfly/react-icons';
 import {
   useActiveNamespace,
-  usePrometheusPoll,
-  PrometheusEndpoint,
   K8sResourceCommon,
   useK8sWatchResource,
   GreenCheckCircleIcon,
   YellowExclamationTriangleIcon,
   TableData,
 } from '@openshift-console/dynamic-plugin-sdk';
+import {
+  useGatewayMetrics,
+  getTotalRequests,
+  getSuccessfulRequests,
+  getErrorRate,
+  getErrorCodes,
+} from '../hooks/useGatewayMetrics';
+import StatusLegend from './shared/StatusLegend';
+import ErrorCodeLabel from './shared/ErrorCodeLabel';
 import './kuadrant.css';
 import ResourceList from './ResourceList';
 import { sortable } from '@patternfly/react-table';
@@ -86,15 +85,6 @@ export const resources: Resource[] = getPoliciesAndGatewayKinds().map((kind) => 
   gvk: resourceGVKMapping[kind],
 }));
 
-interface TotalRequestsByGateway {
-  [gatewayName: string]: {
-    total?: number;
-    errors?: number;
-    codes?: {
-      [responseCode: string]: number;
-    };
-  };
-}
 interface Gateway extends K8sResourceCommon {
   status?: {
     conditions?: {
@@ -187,77 +177,6 @@ const KuadrantOverviewPage: React.FC = () => {
       </Dropdown>
     </>
   );
-
-  const StatusLegend: React.FC = () => {
-    return (
-      <Popover
-        headerContent={t('Status')}
-        bodyContent={
-          <>
-            <Content component={ContentVariants.p}>
-              {t(
-                'It indicates the current operational state of the Gateway and reflects whether its configuration is applied and functioning correctly.',
-              )}
-            </Content>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'auto 1fr',
-                columnGap: 8,
-                rowGap: 8,
-                alignItems: 'center',
-                justifyItems: 'start',
-              }}
-            >
-              <Label isCompact color="green" icon={<CheckCircleIcon />}>
-                {' '}
-                {t('Enforced')}{' '}
-              </Label>
-              <span style={{ fontSize: 12 }}>
-                {t('Resource is accepted, configured, and all policies are enforced.')}
-              </span>
-
-              <Label isCompact color="purple" icon={<UploadIcon />}>
-                {' '}
-                {t('Accepted ')}{' '}
-              </Label>
-              <span style={{ fontSize: 12 }}>
-                {t('Resource is accepted, but not all policies are enforced.')}
-              </span>
-
-              <Label isCompact color="blue" icon={<BuildIcon />}>
-                {' '}
-                {t('Programmed')}{' '}
-              </Label>
-              <span style={{ fontSize: 12 }}>
-                {t('Resource is being configured but not yet enforced.')}
-              </span>
-
-              <Label isCompact color="red" icon={<ExclamationCircleIcon />}>
-                {' '}
-                {t('Conflicted')}{' '}
-              </Label>
-              <span style={{ fontSize: 12 }}>
-                {t('Resource has conflicts, possibly due to policies or configuration issues.')}
-              </span>
-
-              <Label isCompact color="red" icon={<ExclamationCircleIcon />}>
-                {' '}
-                {t('Resolved')}{' '}
-              </Label>
-              <span style={{ fontSize: 12 }}>
-                {t('All dependencies for the policy are successfully resolved.')}
-              </span>
-            </div>
-          </>
-        }
-        triggerAction="hover"
-        position="top"
-      >
-        <QuestionCircleIcon style={{ marginLeft: 6, cursor: 'help' }} aria-label="Status help" />
-      </Popover>
-    );
-  };
 
   const columns = [
     {
@@ -388,216 +307,33 @@ const KuadrantOverviewPage: React.FC = () => {
     setIsOpen(false);
   };
 
-  // Prometheus queries for gateway traffic
-  const [totalRequestsRes, totalRequestsLoaded, totalRequestsError] = usePrometheusPoll({
-    endpoint: PrometheusEndpoint.QUERY,
-    query:
-      'sum by (source_workload, source_workload_namespace) (increase(istio_requests_total[24h]))',
-  });
-  const [totalErrorsRes, totalErrorsLoaded, totalErrorsError] = usePrometheusPoll({
-    endpoint: PrometheusEndpoint.QUERY,
-    query:
-      'sum by (source_workload, source_workload_namespace) (increase(istio_requests_total{response_code!~"2(.*)|3(.*)"}[24h]))',
-  });
-  const [totalErrorsByCodeRes, totalErrorsByCodeLoaded, totalErrorsByCodeError] = usePrometheusPoll(
-    {
-      endpoint: PrometheusEndpoint.QUERY,
-      query:
-        'sum by (response_code, source_workload, source_workload_namespace) (increase(istio_requests_total{response_code!~"2(.*)|3(.*)"}[24h]))',
-    },
-  );
-
-  // Map out query reponses to more easily accessible objects based on gateway name
-  const totalRequestsByGateway: TotalRequestsByGateway = {};
-  const getGateway = (name: string) => {
-    if (!totalRequestsByGateway[name]) {
-      totalRequestsByGateway[name] = {};
-    }
-    return totalRequestsByGateway[name];
-  };
-  if (!totalRequestsError && totalRequestsLoaded) {
-    totalRequestsRes.data.result.forEach((item) => {
-      const gatewayName = `${item.metric.source_workload_namespace}/${item.metric.source_workload}`;
-      getGateway(gatewayName).total = parseFloat(item.value[1]);
-    });
-  }
-  if (!totalErrorsError && totalErrorsLoaded) {
-    totalErrorsRes.data.result.forEach((item) => {
-      const gatewayName = `${item.metric.source_workload_namespace}/${item.metric.source_workload}`;
-      getGateway(gatewayName).errors = parseFloat(item.value[1]);
-    });
-  }
-  if (!totalErrorsByCodeError && totalErrorsByCodeLoaded) {
-    totalErrorsByCodeRes.data.result.forEach((item) => {
-      const gatewayName = `${item.metric.source_workload_namespace}/${item.metric.source_workload}`;
-      const gateway = getGateway(gatewayName);
-      if (!gateway.codes) gateway.codes = {};
-      gateway.codes[item.metric.response_code] = parseFloat(item.value[1]);
-    });
-  }
-
-  // Helper functions to pull out metric values in correct format, given a gateway object
-  const getTotalRequests = (obj: { metadata: { namespace: string; name: string } }): number => {
-    const key = `${obj.metadata.namespace}/${obj.metadata.name}-istio`;
-    const total = totalRequestsByGateway[key]?.total;
-    return Number.isFinite(total) ? Math.round(total) : 0;
-  };
-  const getSuccessfulRequests = (obj: {
-    metadata: { namespace: string; name: string };
-  }): number => {
-    const key = `${obj.metadata.namespace}/${obj.metadata.name}-istio`;
-    const success = totalRequestsByGateway[key]?.total - totalRequestsByGateway[key]?.errors;
-    return Number.isFinite(success) ? Math.round(success) : 0;
-  };
-  const getErrorRate = (obj: { metadata: { namespace: string; name: string } }): string => {
-    const key = `${obj.metadata.namespace}/${obj.metadata.name}-istio`;
-    const rate = (totalRequestsByGateway[key]?.errors / totalRequestsByGateway[key]?.total) * 100;
-    return Number.isFinite(rate) ? rate.toFixed(1) : '-';
-  };
-  const getErrorCodes = (obj: { metadata: { namespace: string; name: string } }): Set<string> => {
-    const codes = new Set<string>();
-    const key = `${obj.metadata.namespace}/${obj.metadata.name}-istio`;
-    if (totalRequestsByGateway[key]?.codes) {
-      Object.entries(totalRequestsByGateway[key].codes).forEach(([key, value]) => {
-        if (key.startsWith('4') && value > 0) {
-          codes.add('4xx');
-        } else if (key.startsWith('5') && value > 0) {
-          codes.add('5xx');
-        } // Omit all other http & non http error codes to avoid confusion.
-      });
-    }
-    return codes;
-  };
-
-  // Metrics columns rendering
-  interface Distribution {
-    total: number;
-    percent: number;
-  }
-  const getErrorCodeDistribution = (
-    obj: { metadata: { namespace: string; name: string } },
-    prefix: string,
-  ): Array<[string, Distribution]> => {
-    const key = `${obj.metadata.namespace}/${obj.metadata.name}-istio`;
-    const codes = totalRequestsByGateway[key]?.codes ?? {};
-    const filteredCodes = Object.entries(codes).filter(([code]) => code.startsWith(prefix));
-
-    const total = filteredCodes.reduce((sum, [, count]) => sum + count, 0);
-
-    const distribution: Array<[string, Distribution]> = [];
-    filteredCodes.forEach(([code, count]) => {
-      if (count < 1) return;
-      distribution.push([
-        code,
-        {
-          total: count,
-          percent: total > 0 ? (count / total) * 100 : 0,
-        },
-      ]);
-    });
-
-    // Sort codes by total after calculating percent
-    const sortedDistribution = distribution.sort(
-      ([, a], [, b]) => Number(b.total) - Number(a.total),
-    );
-
-    return sortedDistribution;
-  };
-  const ErrorCodeLabel: React.FC<{
-    obj: { metadata: { namespace: string; name: string } };
-    codeGroup: string;
-  }> = ({ obj, codeGroup }) => {
-    const [isOpen, setIsOpen] = React.useState(false);
-    const distribution = getErrorCodeDistribution(obj, codeGroup[0]);
-    let lastCode = '';
-    return (
-      <Popover
-        className="custom-rounded-popover"
-        headerContent={`Error Code`}
-        bodyContent={
-          <>
-            <Content component={ContentVariants.p}>
-              {t('Displays the distribution of error codes for request failures.')}
-            </Content>
-            <div className="popover-codes">
-              {distribution.map(([code, dist]) => {
-                lastCode = code;
-                return (
-                  <div key={code} style={{ marginBottom: '8px' }}>
-                    <Progress
-                      value={dist.percent}
-                      title={
-                        <Flex
-                          justifyContent={{ default: 'justifyContentSpaceBetween' }}
-                          alignItems={{ default: 'alignItemsCenter' }}
-                        >
-                          <FlexItem>
-                            <strong>Code: {code}</strong>
-                          </FlexItem>
-                          <FlexItem align={{ default: 'alignRight' }}>
-                            {dist.total.toFixed(0) === '1'
-                              ? '1 request'
-                              : `${dist.total.toFixed(0)} requests`}
-                          </FlexItem>
-                        </Flex>
-                      }
-                      measureLocation={ProgressMeasureLocation.outside}
-                    />
-                    <Divider style={{ margin: '12px 0' }} />
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        }
-        footerContent={
-          <>
-            <span>{t('Last 24h overview')}</span>
-          </>
-        }
-        isVisible={isOpen}
-        shouldClose={() => setIsOpen(false)}
-        position="top"
-      >
-        <Label
-          variant="outline"
-          onClick={() => setIsOpen(!isOpen)}
-          style={{
-            marginRight: '0.5em',
-            textDecoration: 'underline',
-            textDecorationStyle: 'dotted',
-          }}
-        >
-          &nbsp;{distribution.length === 1 ? lastCode : codeGroup}&nbsp;
-        </Label>
-      </Popover>
-    );
-  };
+  // gateway traffic metrics
+  const { metrics: gatewayMetrics } = useGatewayMetrics();
 
   const gatewayTrafficRenders = {
     totalRequests: (column, obj, activeColumnIDs) => {
       return (
         <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
-          {getTotalRequests(obj) || '-'}
+          {getTotalRequests(gatewayMetrics, obj) || '-'}
         </TableData>
       );
     },
     successfulRequests: (column, obj, activeColumnIDs) => {
       return (
         <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
-          {getSuccessfulRequests(obj) || '-'}
+          {getSuccessfulRequests(gatewayMetrics, obj) || '-'}
         </TableData>
       );
     },
     errorRate: (column, obj, activeColumnIDs) => {
       return (
         <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
-          {getErrorRate(obj) || '-'}%
+          {getErrorRate(gatewayMetrics, obj) || '-'}%
         </TableData>
       );
     },
     errorCodes: (column, obj, activeColumnIDs) => {
-      const errorCodes = [...getErrorCodes(obj)];
+      const errorCodes = [...getErrorCodes(gatewayMetrics, obj)];
       return (
         <TableData key={column.id} id={column.id} activeColumnIDs={activeColumnIDs}>
           {errorCodes.length === 0 ? (
@@ -606,7 +342,9 @@ const KuadrantOverviewPage: React.FC = () => {
             </Label>
           ) : (
             errorCodes.map((code) => {
-              return <ErrorCodeLabel key={code} obj={obj} codeGroup={code} />;
+              return (
+                <ErrorCodeLabel key={code} metrics={gatewayMetrics} obj={obj} codeGroup={code} />
+              );
             })
           )}
         </TableData>
