@@ -225,11 +225,6 @@ export const getApiVersion = (kind: ResourceKind): string => {
   return `${gvk.group}/${gvk.version}`;
 };
 
-// get metadata for a kind
-export const getResourceMetadata = (kind: ResourceKind): ResourceMetadata => {
-  return RESOURCES[kind];
-};
-
 // backwards compatibility - export GVK mapping like latest.tsx
 export const resourceGVKMapping: Record<ResourceKind, ResourceGVK> = Object.entries(
   RESOURCES,
