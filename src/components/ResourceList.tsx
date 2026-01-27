@@ -36,6 +36,7 @@ import { getStatusLabel } from '../utils/statusLabel';
 import DropdownWithKebab from './DropdownWithKebab';
 import useAccessReviews from '../utils/resourceRBAC';
 import { getResourceNameFromKind } from '../utils/getModelFromResource';
+import { getPoliciesAndGatewayKinds } from '../utils/resources';
 
 type ResourceListProps = {
   resources: Array<{
@@ -74,19 +75,7 @@ const ResourceList: React.FC<ResourceListProps> = ({
 
   const { userRBAC, loading: rbacLoading } = useAccessReviews(accessResources);
 
-  const resourceKinds = [
-    'AuthPolicy',
-    'RateLimitPolicy',
-    'TokenRateLimitPolicy',
-    'OIDCPolicy',
-    'PlanPolicy',
-    'DNSPolicy',
-    'TLSPolicy',
-    'Gateway',
-    'HTTPRoute',
-  ];
-
-  const resourceMappings = resourceKinds.map((kind) => ({
+  const resourceMappings = getPoliciesAndGatewayKinds().map((kind) => ({
     key: `${getResourceNameFromKind(kind)}-list`,
     group: 'kuadrant.io',
     version: 'v1',

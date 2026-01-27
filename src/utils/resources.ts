@@ -257,4 +257,9 @@ export const getPoliciesForResource = (resourceKind: ResourceKind): ResourceKind
   return RESOURCE_POLICY_MAP[resourceKind] || [];
 };
 
+// get policies + gateway api resources (commonly used for RBAC checks and lists)
+export const getPoliciesAndGatewayKinds = (): ResourceKind[] => {
+  return [...getPolicyKinds(), 'Gateway', 'HTTPRoute'];
+};
+
 export default resourceGVKMapping;

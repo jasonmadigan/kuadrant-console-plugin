@@ -60,7 +60,12 @@ import './kuadrant.css';
 import ResourceList from './ResourceList';
 import { sortable } from '@patternfly/react-table';
 import { INTERNAL_LINKS, EXTERNAL_LINKS } from '../constants/links';
-import { resourceGVKMapping } from '../utils/resources';
+import {
+  resourceGVKMapping,
+  getPolicyKinds,
+  getPoliciesAndGatewayKinds,
+  RESOURCES,
+} from '../utils/resources';
 import { useHistory } from 'react-router-dom';
 import useAccessReviews from '../utils/resourceRBAC';
 import { getResourceNameFromKind } from '../utils/getModelFromResource';
@@ -76,17 +81,10 @@ interface Resource {
     kind: string;
   };
 }
-export const resources: Resource[] = [
-  { name: 'AuthPolicies', gvk: resourceGVKMapping['AuthPolicy'] },
-  { name: 'DNSPolicies', gvk: resourceGVKMapping['DNSPolicy'] },
-  { name: 'RateLimitPolicies', gvk: resourceGVKMapping['RateLimitPolicy'] },
-  { name: 'TokenRateLimitPolicies', gvk: resourceGVKMapping['TokenRateLimitPolicy'] },
-  { name: 'OIDCPolicies', gvk: resourceGVKMapping['OIDCPolicy'] },
-  { name: 'PlanPolicies', gvk: resourceGVKMapping['PlanPolicy'] },
-  { name: 'TLSPolicies', gvk: resourceGVKMapping['TLSPolicy'] },
-  { name: 'Gateways', gvk: resourceGVKMapping['Gateway'] },
-  { name: 'HTTPRoutes', gvk: resourceGVKMapping['HTTPRoute'] },
-];
+export const resources: Resource[] = getPoliciesAndGatewayKinds().map((kind) => ({
+  name: RESOURCES[kind].plural,
+  gvk: resourceGVKMapping[kind],
+}));
 
 interface TotalRequestsByGateway {
   [gatewayName: string]: {
@@ -129,27 +127,9 @@ const KuadrantOverviewPage: React.FC = () => {
   }));
   const { userRBAC, loading } = useAccessReviews(rbacResources);
 
-  const policies = [
-    t('AuthPolicy'),
-    t('RateLimitPolicy'),
-    t('TokenRateLimitPolicy'),
-    t('OIDCPolicy'),
-    t('PlanPolicy'),
-    t('DNSPolicy'),
-    t('TLSPolicy'),
-  ];
+  const policies = getPolicyKinds().map((kind) => t(kind));
 
-  const resourceRBAC = [
-    'TLSPolicy',
-    'DNSPolicy',
-    'RateLimitPolicy',
-    'TokenRateLimitPolicy',
-    'OIDCPolicy',
-    'PlanPolicy',
-    'AuthPolicy',
-    'Gateway',
-    'HTTPRoute',
-  ].reduce(
+  const resourceRBAC = getPoliciesAndGatewayKinds().reduce(
     (acc, resource) => ({
       ...acc,
       [resource]: {
@@ -160,14 +140,7 @@ const KuadrantOverviewPage: React.FC = () => {
     {} as Record<string, { list: boolean; create: boolean }>,
   );
 
-  const policyRBACNill =
-    !resourceRBAC['AuthPolicy']['list'] &&
-    !resourceRBAC['RateLimitPolicy']['list'] &&
-    !resourceRBAC['TokenRateLimitPolicy']['list'] &&
-    !resourceRBAC['OIDCPolicy']['list'] &&
-    !resourceRBAC['PlanPolicy']['list'] &&
-    !resourceRBAC['DNSPolicy']['list'] &&
-    !resourceRBAC['TLSPolicy']['list'];
+  const policyRBACNill = getPolicyKinds().every((kind) => !resourceRBAC[kind]?.list);
 
   React.useEffect(() => {
     if (ns && ns !== activeNamespace) {
