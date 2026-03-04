@@ -76,6 +76,22 @@
     }
   },
   {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/k8s/ns/:ns/ratelimitpolicy/name/:name/edit",
+      "component": { "$codeRef": "KuadrantRateLimitPolicyCreatePage" }
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/k8s/ns/:ns/tokenratelimitpolicy/name/:name/edit",
+      "component": { "$codeRef": "KuadrantTokenRateLimitPolicyCreatePage" }
+    }
+  },
+  {
     "type": "console.resource/create",
     "properties": {
       "model": {
@@ -172,6 +188,28 @@
         "kind": "TLSPolicy"
       },
       "provider": { "$codeRef": "useTLSPolicyActions" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "kuadrant.io",
+        "version": "v1",
+        "kind": "RateLimitPolicy"
+      },
+      "provider": { "$codeRef": "useRateLimitPolicyActions" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "kuadrant.io",
+        "version": "v1alpha1",
+        "kind": "TokenRateLimitPolicy"
+      },
+      "provider": { "$codeRef": "useTokenRateLimitPolicyActions" }
     }
   },
   {

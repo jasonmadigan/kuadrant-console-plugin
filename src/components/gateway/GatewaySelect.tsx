@@ -15,16 +15,19 @@ import { RESOURCES } from '../../utils/resources';
 interface GatewaySelectProps {
   selectedGateway: Gateway;
   onChange: (updated: Gateway) => void;
+  namespace?: string;
 }
 
-const GatewaySelect: React.FC<GatewaySelectProps> = ({ selectedGateway, onChange }) => {
+const GatewaySelect: React.FC<GatewaySelectProps> = ({ selectedGateway, onChange, namespace }) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
   const [gateways, setGateways] = React.useState([]);
   const gvk = RESOURCES.Gateway.gvk;
+  const effectiveNs = namespace && namespace !== '#ALL_NS#' ? namespace : undefined;
 
   const gatewayResource = {
     groupVersionKind: gvk,
     isList: true,
+    ...(effectiveNs ? { namespace: effectiveNs } : {}),
   };
 
   const [gatewayData, gatewayLoaded, gatewayError] = useK8sWatchResource(gatewayResource);
@@ -71,9 +74,15 @@ const GatewaySelect: React.FC<GatewaySelectProps> = ({ selectedGateway, onChange
         <FormHelperText>
           <HelperText>
             <HelperTextItem>
-              {t(
-                'Gateway: Reference to a Kubernetes resource that the policy attaches to. To create an additional gateway go to',
-              )}{' '}
+              {effectiveNs
+                ? t(
+                    'Showing gateways in namespace {{namespace}}. Policies can only target resources in the same namespace.',
+                    { namespace: effectiveNs },
+                  )
+                : t(
+                    'Gateway: Reference to a Kubernetes resource that the policy attaches to.',
+                  )}{' '}
+              {t('To create an additional gateway go to')}{' '}
               <ResourceLink
                 groupVersionKind={gvk}
                 title="Create a Gateway"

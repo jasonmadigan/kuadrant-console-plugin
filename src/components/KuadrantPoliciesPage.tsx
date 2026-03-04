@@ -12,7 +12,7 @@ import {
   useActivePerspective,
   ListPageCreateLink,
   ListPageBody,
-  useAccessReview,
+  checkAccess,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { Title, Tooltip } from '@patternfly/react-core';
 import {
@@ -62,22 +62,45 @@ interface RBACMap {
   [key: string]: ResourceRBAC;
 }
 
-const useResourceRBAC = (resourceKey: string, namespace?: string): ResourceRBAC => {
-  const gvk = resourceGVKMapping[resourceKey];
-  const resourceName = getResourceNameFromKind(gvk.kind);
-  const [listAllowed, listLoading] = useAccessReview({
-    group: gvk.group,
-    resource: resourceName,
-    verb: 'list',
-    namespace,
-  });
-  const [createAllowed, createLoading] = useAccessReview({
-    group: gvk.group,
-    resource: resourceName,
-    verb: 'create',
-    namespace,
-  });
-  return { list: listAllowed, create: createAllowed, loaded: !listLoading && !createLoading };
+const usePolicyRBAC = (kinds: string[], namespace?: string): { rbac: RBACMap; loaded: boolean } => {
+  const [rbac, setRBAC] = useState<RBACMap>({});
+  const [loaded, setLoaded] = useState(false);
+  const kindsKey = kinds.join(',');
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoaded(false);
+
+    const checks = kinds.flatMap((kind) => {
+      const gvk = resourceGVKMapping[kind];
+      const resourceName = getResourceNameFromKind(gvk.kind);
+      return (['list', 'create'] as const).map((verb) =>
+        checkAccess({
+          group: gvk.group,
+          resource: resourceName,
+          verb,
+          ...(namespace ? { namespace } : {}),
+        }).then((result) => ({ kind, verb, allowed: result.status?.allowed ?? false })),
+      );
+    });
+
+    Promise.all(checks).then((results) => {
+      if (cancelled) return;
+      const map: RBACMap = {};
+      for (const { kind, verb, allowed } of results) {
+        if (!map[kind]) map[kind] = { list: false, create: false, loaded: true };
+        map[kind][verb] = allowed;
+      }
+      setRBAC(map);
+      setLoaded(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [kindsKey, namespace]);
+
+  return { rbac, loaded };
 };
 
 export const AllPoliciesListPage: React.FC<{
@@ -281,14 +304,9 @@ const KuadrantPoliciesPage: React.FC = () => {
 
   const nsForCheck = activeNamespace === '#ALL_NS#' ? 'default' : activeNamespace;
 
-  // dynamically generate RBAC map for all policies
   const policyKinds = getPolicyKinds();
-  const resourceRBAC: RBACMap = policyKinds.reduce((acc, kind) => {
-    acc[kind] = useResourceRBAC(kind, nsForCheck);
-    return acc;
-  }, {} as RBACMap);
+  const { rbac: resourceRBAC, loaded: permsLoaded } = usePolicyRBAC(policyKinds, nsForCheck);
 
-  const permsLoaded = policyKinds.every((key) => resourceRBAC[key]?.loaded);
   if (!permsLoaded) {
     return <div>Loading permissions...</div>;
   }

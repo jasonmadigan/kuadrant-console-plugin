@@ -163,23 +163,19 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
     };
   }
 
-  //Checking if the policy already exists and is to be edited or if its new and is being created
-  let dnsResource = null;
-  if (nameEdit) {
-    dnsResource = {
-      groupVersionKind: dnsPolicyGVK,
-      isList: false,
-      name: nameEdit,
-      namespace: namespaceEdit,
-    };
-  }
+  const dnsResource = nameEdit
+    ? {
+        groupVersionKind: dnsPolicyGVK,
+        isList: false,
+        name: nameEdit,
+        namespace: namespaceEdit,
+      }
+    : null;
 
-  const [dnsData, dnsLoaded, dnsError] = dnsResource
-    ? useK8sWatchResource(dnsResource)
-    : [null, false, null]; //Syntax allows for dnsResource to be null in the case of a create
+  const [dnsData, dnsLoaded, dnsError] = useK8sWatchResource(dnsResource);
 
   React.useEffect(() => {
-    if (dnsLoaded && !dnsError) {
+    if (dnsLoaded && !dnsError && dnsData) {
       if (!Array.isArray(dnsData)) {
         const dnsPolicyUpdate = dnsData as dnsPolicyEdit;
         setCreationTimestamp(dnsPolicyUpdate.metadata.creationTimestamp);
@@ -293,7 +289,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
           {create ? t('Create DNS Policy') : t('Edit DNS Policy')}
         </title>
       </Helmet>
-      <PageSection hasBodyWrapper={false} className="pf-m-no-padding">
+      <PageSection hasBodyWrapper={false}>
         <div className="co-m-nav-title">
           <Title headingLevel="h1">{create ? t('Create DNS Policy') : t('Edit DNS Policy')}</Title>
           <p className="help-block">
@@ -345,7 +341,11 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
                 </HelperText>
               </FormHelperText>
             </FormGroup>
-            <GatewaySelect selectedGateway={selectedGateway} onChange={setSelectedGateway} />
+            <GatewaySelect
+              selectedGateway={selectedGateway}
+              onChange={setSelectedGateway}
+              namespace={namespaceEdit || selectedNamespace}
+            />
             <FormGroup label={t('Provider Ref')} isRequired fieldId="Provider-ref">
               <TextInput
                 isRequired

@@ -32,7 +32,7 @@ import {
   TableData,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { SearchIcon } from '@patternfly/react-icons';
-import { getStatusLabel } from '../utils/statusLabel';
+import { useStatusLabel } from '../utils/statusLabel';
 import DropdownWithKebab from './DropdownWithKebab';
 import useAccessReviews from '../utils/resourceRBAC';
 import { getResourceNameFromKind } from '../utils/getModelFromResource';
@@ -244,6 +244,7 @@ const ResourceList: React.FC<ResourceListProps> = ({
   };
 
   const ResourceRow: React.FC<RowProps<K8sResourceCommon>> = ({ obj, activeColumnIDs }) => {
+    const getStatusLabel = useStatusLabel();
     const { apiVersion, kind } = obj;
     const [group, version] = apiVersion.includes('/') ? apiVersion.split('/') : ['', apiVersion];
 

@@ -15,16 +15,23 @@ import { RESOURCES } from '../../utils/resources';
 interface HTTPRouteSelectProps {
   selectedHTTPRoute: HTTPRoute;
   onChange: (updated: HTTPRoute) => void;
+  namespace?: string;
 }
 
-const HTTPRouteSelect: React.FC<HTTPRouteSelectProps> = ({ selectedHTTPRoute, onChange }) => {
+const HTTPRouteSelect: React.FC<HTTPRouteSelectProps> = ({
+  selectedHTTPRoute,
+  onChange,
+  namespace,
+}) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
   const [httpRoutes, setHTTPRoutes] = React.useState([]);
   const gvk = RESOURCES.HTTPRoute.gvk;
+  const effectiveNs = namespace && namespace !== '#ALL_NS#' ? namespace : undefined;
 
   const httpRouteResource = {
     groupVersionKind: gvk,
     isList: true,
+    ...(effectiveNs ? { namespace: effectiveNs } : {}),
   };
 
   const [httpRouteData, httpRouteLoaded, httpRouteError] = useK8sWatchResource(httpRouteResource);
@@ -71,7 +78,13 @@ const HTTPRouteSelect: React.FC<HTTPRouteSelectProps> = ({ selectedHTTPRoute, on
         <FormHelperText>
           <HelperText>
             <HelperTextItem>
-              {t('You can view and create HTTPRoutes')}{' '}
+              {effectiveNs
+                ? t(
+                    'Showing HTTPRoutes in namespace {{namespace}}. Policies can only target resources in the same namespace.',
+                    { namespace: effectiveNs },
+                  )
+                : t('You can view and create HTTPRoutes.')}{' '}
+              {t('View or create HTTPRoutes')}{' '}
               <ResourceLink
                 groupVersionKind={gvk}
                 title="Create an HTTPRoute"

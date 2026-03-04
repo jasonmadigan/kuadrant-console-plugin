@@ -117,24 +117,20 @@ const KuadrantTLSCreatePage: React.FC = () => {
     };
   }
 
-  //Checking if the policy already exists and is to be edited or if its new and is being created
-  let tlsResource = null;
-  if (nameEdit) {
-    tlsResource = {
-      groupVersionKind: tlsPolicyGVK,
-      isList: false,
-      name: nameEdit,
-      namespace: namespaceEdit,
-    };
-  }
+  const tlsResource = nameEdit
+    ? {
+        groupVersionKind: tlsPolicyGVK,
+        isList: false,
+        name: nameEdit,
+        namespace: namespaceEdit,
+      }
+    : null;
 
-  const [tlsData, tlsLoaded, tlsError] = tlsResource
-    ? useK8sWatchResource(tlsResource)
-    : [null, false, null]; //Syntax allows for tlsResource to be null in the case of a create
+  const [tlsData, tlsLoaded, tlsError] = useK8sWatchResource(tlsResource);
 
   // When a resource is being updated setting the form from the yaml it gets from useK8sWatchResource
   React.useEffect(() => {
-    if (tlsLoaded && !tlsError) {
+    if (tlsLoaded && !tlsError && tlsData) {
       if (!Array.isArray(tlsData)) {
         const tlsPolicyUpdate = tlsData as TLSPolicyEdit;
         setCreationTimestamp(tlsPolicyUpdate.metadata.creationTimestamp);
@@ -229,7 +225,7 @@ const KuadrantTLSCreatePage: React.FC = () => {
           {create ? t('Create TLS Policy') : t('Edit TLS Policy')}
         </title>
       </Helmet>
-      <PageSection hasBodyWrapper={false} className="pf-m-no-padding">
+      <PageSection hasBodyWrapper={false}>
         <div className="co-m-nav-title">
           <Title headingLevel="h1">{create ? 'Create TLS Policy' : 'Edit TLS Policy'}</Title>
           <p className="help-block">
@@ -282,7 +278,11 @@ const KuadrantTLSCreatePage: React.FC = () => {
                 </HelperText>
               </FormHelperText>
             </FormGroup>
-            <GatewaySelect selectedGateway={selectedGateway} onChange={setSelectedGateway} />
+            <GatewaySelect
+              selectedGateway={selectedGateway}
+              onChange={setSelectedGateway}
+              namespace={namespaceEdit || selectedNamespace}
+            />
             <FormGroup
               role="radiogroup"
               isInline

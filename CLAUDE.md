@@ -197,6 +197,8 @@ Currently limited testing infrastructure:
 9. **Dynamic values in factory functions**: Pass getter functions instead of values to ensure current state is accessed
 10. **Topology fit-to-screen not working**: Check for controller recreation due to changing dependencies
 11. **Topology not rendering after refactor**: CRITICAL - GVK mapping must be stored in React state (`useState`), not module-level variables. Module-level object mutations don't trigger React re-renders, causing the controller to never initialize when the mapping is populated asynchronously
+12. **Number input placeholders truncated**: PatternFly 6 sets `max-width: 100px` on `<input type="number">`. Override with `max-width: 100%` in a parent selector to make placeholders visible
+13. **useK8sWatchResource(null) in create pages**: Returns `[undefined, true, null]` (loaded=true, data=undefined). Always guard the useEffect with a truthiness check on the data before accessing `.metadata`
 
 ## PatternFly 6 Upgrade Notes
 

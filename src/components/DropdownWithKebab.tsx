@@ -68,8 +68,6 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
   const onEditClick = () => {
     if (
       obj.kind === 'AuthPolicy' ||
-      obj.kind === 'RateLimitPolicy' ||
-      obj.kind === 'TokenRateLimitPolicy' ||
       obj.kind === 'OIDCPolicy' ||
       obj.kind === 'PlanPolicy' ||
       obj.kind === 'Gateway' ||

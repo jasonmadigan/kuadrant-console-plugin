@@ -241,6 +241,40 @@
   overflow-y: auto;
 }
 
+/* rate limit policy form field rows */
+.kuadrant-field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.kuadrant-field-row__input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* pf6 sets max-width: 100px on number inputs, truncating placeholders */
+.kuadrant-field-row input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.kuadrant-field-row__input--wide {
+  flex: 1;
+}
+
+.kuadrant-limit-entry {
+  border: 1px solid var(--pf-v6-global--BorderColor--100);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.kuadrant-limits-section__entry {
+  margin-bottom: 0.5rem;
+}
+
 /* fix virtualized table cell alignment for kuadrant tables */
 .kuadrant-resource-list .ReactVirtualized__Table__rowColumn,
 .kuadrant-policy-list .ReactVirtualized__Table__rowColumn,

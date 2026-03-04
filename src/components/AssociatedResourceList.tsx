@@ -12,7 +12,7 @@ import {
   WatchK8sResource,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { SearchIcon } from '@patternfly/react-icons';
-import { getStatusLabel } from '../utils/statusLabel';
+import { useStatusLabel } from '../utils/statusLabel';
 import { RESOURCES } from '../utils/resources';
 
 type AssociatedResourceListProps = {
@@ -91,6 +91,7 @@ const AssociatedResourceList: React.FC<AssociatedResourceListProps> = ({ resourc
   ];
 
   const AssociatedResourceRow: React.FC<RowProps<K8sResourceKind>> = ({ obj, activeColumnIDs }) => {
+    const getStatusLabel = useStatusLabel();
     const [group, version] = obj.apiVersion.includes('/')
       ? obj.apiVersion.split('/')
       : ['', obj.apiVersion];
