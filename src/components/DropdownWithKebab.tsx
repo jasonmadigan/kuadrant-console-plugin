@@ -113,7 +113,7 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
         shouldFocusToggleOnSelect
       >
         <DropdownList>
-          {!rbacLoading && resourceRBAC[obj.kind]['edit'] == true ? (
+          {!rbacLoading && resourceRBAC[obj.kind]['edit'] === true ? (
             <DropdownItem value="edit" key="edit" onClick={onEditClick}>
               Edit
             </DropdownItem>
@@ -129,7 +129,7 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
               </DropdownItem>
             </Tooltip>
           )}
-          {!rbacLoading && resourceRBAC[obj.kind]['delete'] == true ? (
+          {!rbacLoading && resourceRBAC[obj.kind]['delete'] === true ? (
             <DropdownItem value="delete" key="delete">
               Delete
             </DropdownItem>
