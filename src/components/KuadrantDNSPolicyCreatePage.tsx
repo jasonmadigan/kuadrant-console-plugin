@@ -254,7 +254,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   };
 
   React.useEffect(() => {
-    setYamlInput(dnsPolicy);
+    setYamlInput(createDNSPolicy());
   }, [policyName, selectedNamespace, selectedGateway, providerRefs, loadBalancing, healthCheck]);
 
   const handlePolicyChange = (_event, policy: string) => {

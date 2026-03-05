@@ -190,7 +190,7 @@ const KuadrantTLSCreatePage: React.FC = () => {
   };
   // When new changes are made to via form update the yaml view
   React.useEffect(() => {
-    setYamlInput(tlsPolicy);
+    setYamlInput(createTlsPolicy());
   }, [
     policyName,
     selectedNamespace,
