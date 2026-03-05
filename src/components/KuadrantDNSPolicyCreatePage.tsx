@@ -70,7 +70,6 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   const [loadBalancingExpanded, setLoadBalancingExpanded] = React.useState(false);
   const [healthExpanded, setHealthExpanded] = React.useState(false);
 
-  let isFormValid = false;
 
   const createDNSPolicy = () => {
     const hasHealthCheck =
@@ -266,23 +265,18 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   const handleCancelResource = () => {
     handleCancel(history);
   };
-  const formValidation = () => {
-    if (
-      policyName &&
-      selectedGateway.name &&
-      providerRefs.length > 0 &&
-      (!loadBalancingExpanded ||
-        (loadBalancing.geo && loadBalancing.weight && loadBalancing.defaultGeo !== undefined)) &&
-      (!healthExpanded ||
-        (healthCheck.endpoint &&
-          healthCheck.failureThreshold > 0 &&
-          healthCheck.port > 0 &&
-          healthCheck.protocol !== ''))
-    ) {
-      isFormValid = true;
-    }
-    return isFormValid;
-  };
+  const isFormValid = !!(
+    policyName &&
+    selectedGateway.name &&
+    providerRefs.length > 0 &&
+    (!loadBalancingExpanded ||
+      (loadBalancing.geo && loadBalancing.weight && loadBalancing.defaultGeo !== undefined)) &&
+    (!healthExpanded ||
+      (healthCheck.endpoint &&
+        healthCheck.failureThreshold > 0 &&
+        healthCheck.port > 0 &&
+        healthCheck.protocol !== ''))
+  );
 
   return (
     <>
@@ -395,7 +389,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
                 resource={dnsPolicy}
                 policyType="dns"
                 history={history}
-                validation={formValidation()}
+                validation={isFormValid}
               />
               <Button variant="link" onClick={handleCancelResource}>
                 {t('Cancel')}

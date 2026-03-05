@@ -62,7 +62,6 @@ const KuadrantTLSCreatePage: React.FC = () => {
   const [create, setCreate] = React.useState(true);
   const [creationTimestamp, setCreationTimestamp] = React.useState('');
   const [resourceVersion, setResourceVersion] = React.useState('');
-  let isFormValid = false;
 
   // Creates TLS policy object to be used for form and yaml creation of the resource
   const createTlsPolicy = () => ({
@@ -211,14 +210,12 @@ const KuadrantTLSCreatePage: React.FC = () => {
     handleCancel(history);
   };
 
-  if (
+  const isFormValid = !!(
     policyName &&
     selectedNamespace &&
     selectedGateway.name &&
     (selectedClusterIssuers.name || selectedIssuer.name)
-  ) {
-    isFormValid = true;
-  }
+  );
 
   return (
     <>
