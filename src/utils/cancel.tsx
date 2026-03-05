@@ -1,5 +1,5 @@
 import { History } from 'history';
 
-export function handleCancel(namespace: string, data, history: History) {
+export function handleCancel(history: History) {
   history.goBack();
 }

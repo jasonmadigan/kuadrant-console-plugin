@@ -428,7 +428,7 @@ const KuadrantPlanPolicyCreatePage: React.FC = () => {
               />
               <Button
                 variant="link"
-                onClick={() => handleCancel(selectedNamespace, policy, history)}
+                onClick={() => handleCancel(history)}
               >
                 {t('Cancel')}
               </Button>

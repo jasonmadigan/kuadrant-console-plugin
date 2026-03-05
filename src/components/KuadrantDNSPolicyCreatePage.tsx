@@ -265,7 +265,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   };
 
   const handleCancelResource = () => {
-    handleCancel(selectedNamespace, dnsPolicy, history);
+    handleCancel(history);
   };
   const formValidation = () => {
     if (
