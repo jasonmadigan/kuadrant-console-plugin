@@ -37,6 +37,7 @@
     "@patternfly/react-core": "^6.2.2",
     "@patternfly/react-icons": "^6.2.2",
     "@playwright/test": "^1.50.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^18.0.0",
     "@types/react": "^17.0.37",
     "@types/react-helmet": "^6.1.4",
@@ -119,6 +120,7 @@
     "graphlib-dot": "^0.6.4",
     "i18next": "^25.8.0",
     "i18next-parser": "^9.0.1",
+    "js-yaml": "^4.1.0",
     "pluralize": "^8.0.0"
   },
   "packageManager": "yarn@4.12.0"
