@@ -16,9 +16,10 @@ interface GatewaySelectProps {
   selectedGateway: Gateway;
   onChange: (updated: Gateway) => void;
   namespace?: string;
+  isDisabled?: boolean;
 }
 
-const GatewaySelect: React.FC<GatewaySelectProps> = ({ selectedGateway, onChange, namespace }) => {
+const GatewaySelect: React.FC<GatewaySelectProps> = ({ selectedGateway, onChange, namespace, isDisabled }) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
   const [gateways, setGateways] = React.useState([]);
   const gvk = RESOURCES.Gateway.gvk;
@@ -56,6 +57,7 @@ const GatewaySelect: React.FC<GatewaySelectProps> = ({ selectedGateway, onChange
           value={`${selectedGateway.namespace}/${selectedGateway.name}`}
           onChange={handleGatewayChange}
           aria-label={t('Select Gateway')}
+          isDisabled={isDisabled}
         >
           <FormSelectOption
             key="placeholder"

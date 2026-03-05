@@ -284,6 +284,7 @@ const KuadrantTLSCreatePage: React.FC = () => {
               selectedGateway={selectedGateway}
               onChange={setSelectedGateway}
               namespace={namespaceEdit || selectedNamespace}
+              isDisabled={formDisabled}
             />
             <FormGroup
               role="radiogroup"

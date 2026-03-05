@@ -247,6 +247,7 @@ const KuadrantTelemetryPolicyCreatePage: React.FC = () => {
               selectedGateway={selectedGateway}
               onChange={setSelectedGateway}
               namespace={namespaceEdit || selectedNamespace}
+              isDisabled={formDisabled}
             />
             <FormGroup label={t('Metrics labels')} isRequired fieldId="metrics-labels">
               <FormHelperText>
