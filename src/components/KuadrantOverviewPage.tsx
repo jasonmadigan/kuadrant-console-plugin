@@ -874,12 +874,12 @@ const KuadrantOverviewPage: React.FC = () => {
                         onClick={() => handleCreateResource('Gateway')}
                         className="kuadrant-overview-create-button"
                       >
-                        {t(`Create Gateway`)}
+                        {t('Create Gateway')}
                       </Button>
                     ) : (
-                      <Tooltip content="You do not have permission to create a Gateway">
+                      <Tooltip content={t('You do not have permission to create a Gateway')}>
                         <Button className="kuadrant-overview-create-button" isAriaDisabled>
-                          {t(`Create Gateway`)}
+                          {t('Create Gateway')}
                         </Button>
                       </Tooltip>
                     )}
@@ -980,7 +980,7 @@ const KuadrantOverviewPage: React.FC = () => {
                           ) : (
                             <Tooltip
                               key={policy}
-                              content={t(`You do not have permission to create a ${policy}`)}
+                              content={t('You do not have permission to create a {{policy}}', { policy })}
                             >
                               <DropdownItem value={policy} isAriaDisabled>
                                 {t(policy)}
@@ -1021,12 +1021,12 @@ const KuadrantOverviewPage: React.FC = () => {
                         onClick={() => handleCreateResource('HTTPRoute')}
                         className="kuadrant-overview-create-button"
                       >
-                        {t(`Create HTTPRoute`)}
+                        {t('Create HTTPRoute')}
                       </Button>
                     ) : (
-                      <Tooltip content="You do not have permission to create a HTTPRoute">
+                      <Tooltip content={t('You do not have permission to create a HTTPRoute')}>
                         <Button className="kuadrant-overview-create-button" isAriaDisabled>
-                          {t(`Create HTTPRoute`)}
+                          {t('Create HTTPRoute')}
                         </Button>
                       </Tooltip>
                     )}

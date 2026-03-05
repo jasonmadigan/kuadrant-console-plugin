@@ -60,13 +60,13 @@ const KuadrantCreateUpdate: React.FC<GenericPolicyForm> = ({
     <>
       {errorAlertMsg !== '' && (
         <AlertGroup className="kuadrant-alert-group">
-          <Alert title={t(`Error creating ${policyType}`)} variant={AlertVariant.danger} isInline>
+          <Alert title={t('Error creating {{type}}', { type: policyType })} variant={AlertVariant.danger} isInline>
             {errorAlertMsg}
           </Alert>
         </AlertGroup>
       )}
       <Button onClick={handleCreateUpdate} isDisabled={!validation}>
-        {update ? t(`Save`) : t(`Create`)}
+        {update ? t('Save') : t('Create')}
       </Button>
     </>
   );
