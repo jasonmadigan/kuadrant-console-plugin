@@ -15,7 +15,7 @@ import {
   ActionGroup,
 } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
-import './kuadrant.css';
+import '../kuadrant.css';
 import {
   ResourceYAMLEditor,
   getGroupVersionKindForResource,
@@ -26,33 +26,27 @@ import {
 } from '@openshift-console/dynamic-plugin-sdk';
 import { useHistory, useLocation } from 'react-router-dom';
 import yaml from 'js-yaml';
-import {
-  TargetRef,
-  PatternExpression,
-  WhenPredicate,
-  AuthenticationSpec,
-  MetadataSpec,
-  AuthorizationSpec,
-  ResponseSpec,
-  CallbackSpec,
-  DefaultsOrOverrides,
-  AuthSchemeSpec,
-} from './authpolicy/types';
-import TargetRefField from './shared/TargetRefField';
-import NamedPatternsSection from './authpolicy/NamedPatternsSection';
-import WhenConditionsField from './authpolicy/WhenConditionsField';
-import AuthenticationSection from './authpolicy/AuthenticationSection';
-import MetadataSection from './authpolicy/MetadataSection';
-import AuthorizationSection from './authpolicy/AuthorizationSection';
-import ResponseSection from './authpolicy/ResponseSection';
-import CallbacksSection from './authpolicy/CallbacksSection';
-import KuadrantCreateUpdate from './KuadrantCreateUpdate';
-import { handleCancel } from '../utils/cancel';
-import { resourceGVKMapping } from '../utils/resources';
+import { TargetRef, LimitConfig, Predicate, DefaultsOrOverrides } from './types';
+import TargetRefField from './TargetRefField';
+import LimitsSection from './LimitsSection';
+import WhenField from './WhenField';
+import KuadrantCreateUpdate from '../KuadrantCreateUpdate';
+import { handleCancel } from '../../utils/cancel';
+import { resourceGVKMapping } from '../../utils/resources';
 
-type SpecMode = 'rules' | 'defaults' | 'overrides';
+export interface RateLimitFormConfig {
+  resourceKey: string;
+  policyType: string;
+  tokenMode?: boolean;
+  createTitle: string;
+  editTitle: string;
+  description: string;
+  nameHelperText: string;
+}
 
-const KuadrantAuthPolicyCreatePage: React.FC = () => {
+type SpecMode = 'limits' | 'defaults' | 'overrides';
+
+const RateLimitPolicyForm: React.FC<{ config: RateLimitFormConfig }> = ({ config }) => {
   const { t } = useTranslation('plugin__kuadrant-console-plugin');
   const history = useHistory();
   const location = useLocation();
@@ -67,28 +61,11 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
       name: params.get('targetName') || '',
     };
   });
-  const [specMode, setSpecMode] = React.useState<SpecMode>('rules');
+  const [specMode, setSpecMode] = React.useState<SpecMode>('limits');
+  const [limits, setLimits] = React.useState<Record<string, LimitConfig>>({});
   const [strategy, setStrategy] = React.useState<'atomic' | 'merge'>('atomic');
-
-  // named patterns
-  const [namedPatterns, setNamedPatterns] = React.useState<
-    Record<string, { allOf: PatternExpression[] }>
-  >({});
-
-  // conditions
-  const [topLevelWhen, setTopLevelWhen] = React.useState<WhenPredicate[]>([]);
-  const [sectionWhen, setSectionWhen] = React.useState<WhenPredicate[]>([]);
-
-  // rules
-  const [authentication, setAuthentication] = React.useState<Record<string, AuthenticationSpec>>(
-    {},
-  );
-  const [metadata, setMetadata] = React.useState<Record<string, MetadataSpec>>({});
-  const [authorization, setAuthorization] = React.useState<Record<string, AuthorizationSpec>>({});
-  const [response, setResponse] = React.useState<ResponseSpec>({});
-  const [callbacks, setCallbacks] = React.useState<Record<string, CallbackSpec>>({});
-
-  // edit mode state
+  const [sectionWhen, setSectionWhen] = React.useState<Predicate[]>([]);
+  const [topLevelWhen, setTopLevelWhen] = React.useState<Predicate[]>([]);
   const [formDisabled, setFormDisabled] = React.useState(false);
   const [create, setCreate] = React.useState(true);
   const [creationTimestamp, setCreationTimestamp] = React.useState('');
@@ -98,7 +75,7 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
   const nameEdit = pathSplit[6];
   const namespaceEdit = pathSplit[3];
 
-  const gvkInfo = resourceGVKMapping['AuthPolicy'];
+  const gvkInfo = resourceGVKMapping[config.resourceKey];
   const policyGVK = getGroupVersionKindForResource({
     apiVersion: `${gvkInfo.group}/${gvkInfo.version}`,
     kind: gvkInfo.kind,
@@ -109,7 +86,6 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
     kind: policyGVK.kind,
   });
 
-  // build the policy resource from form state
   const createPolicy = () => {
     const cleanTargetRef: Record<string, string> = {
       group: targetRef.group,
@@ -120,40 +96,23 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
       cleanTargetRef.sectionName = targetRef.sectionName;
     }
 
-    const hasAuth = Object.keys(authentication).length > 0;
-    const hasMeta = Object.keys(metadata).length > 0;
-    const hasAuthz = Object.keys(authorization).length > 0;
-    const hasCallbacks = Object.keys(callbacks).length > 0;
-    const hasResponse = response.unauthenticated || response.unauthorized || response.success;
-
-    // build rules object
-    const rules: AuthSchemeSpec = {};
-    if (hasAuth) rules.authentication = authentication;
-    if (hasMeta) rules.metadata = metadata;
-    if (hasAuthz) rules.authorization = authorization;
-    if (hasResponse) rules.response = response;
-    if (hasCallbacks) rules.callbacks = callbacks;
-
-    const hasRules = Object.keys(rules).length > 0;
-    const hasPatterns = Object.keys(namedPatterns).length > 0;
-    const cleanWhen = topLevelWhen.length > 0 ? topLevelWhen : undefined;
-    const cleanSectionWhen = sectionWhen.length > 0 ? sectionWhen : undefined;
+    const hasLimits = Object.keys(limits).length > 0;
+    const cleanWhen = topLevelWhen.filter((p) => p.predicate);
+    const cleanSectionWhen = sectionWhen.filter((p) => p.predicate);
 
     const spec: Record<string, unknown> = { targetRef: cleanTargetRef };
 
-    if (specMode === 'rules') {
-      if (hasPatterns) spec.patterns = namedPatterns;
-      if (cleanWhen) spec.when = cleanWhen;
-      if (hasRules) spec.rules = rules;
+    if (specMode === 'limits') {
+      if (hasLimits) spec.limits = limits;
     } else {
       const section: Record<string, unknown> = {};
+      if (hasLimits) section.limits = limits;
       if (strategy !== 'atomic') section.strategy = strategy;
-      if (hasPatterns) section.patterns = namedPatterns;
-      if (cleanSectionWhen) section.when = cleanSectionWhen;
-      if (hasRules) section.rules = rules;
+      if (cleanSectionWhen.length > 0) section.when = cleanSectionWhen;
       if (Object.keys(section).length > 0) spec[specMode] = section;
-      if (cleanWhen) spec.when = cleanWhen;
     }
+
+    if (cleanWhen.length > 0) spec.when = cleanWhen;
 
     return {
       apiVersion: `${gvkInfo.group}/${gvkInfo.version}`,
@@ -196,35 +155,24 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
       });
     }
 
-    // determine spec mode and load the proper section
-    const loadSpecProper = (source: Record<string, unknown>) => {
-      setNamedPatterns((source.patterns as Record<string, { allOf: PatternExpression[] }>) || {});
-      const rules = (source.rules as AuthSchemeSpec) || {};
-      setAuthentication(rules.authentication || {});
-      setMetadata(rules.metadata || {});
-      setAuthorization(rules.authorization || {});
-      setResponse(rules.response || {});
-      setCallbacks(rules.callbacks || {});
-    };
-
     if (spec.defaults) {
       setSpecMode('defaults');
       const d = spec.defaults as DefaultsOrOverrides;
+      setLimits(d.limits || {});
       setStrategy(d.strategy || 'atomic');
       setSectionWhen(d.when || []);
-      loadSpecProper(d as unknown as Record<string, unknown>);
     } else if (spec.overrides) {
       setSpecMode('overrides');
       const o = spec.overrides as DefaultsOrOverrides;
+      setLimits(o.limits || {});
       setStrategy(o.strategy || 'atomic');
       setSectionWhen(o.when || []);
-      loadSpecProper(o as unknown as Record<string, unknown>);
     } else {
-      setSpecMode('rules');
-      loadSpecProper(spec);
+      setSpecMode('limits');
+      setLimits((spec.limits as Record<string, LimitConfig>) || {});
     }
 
-    setTopLevelWhen((spec.when as WhenPredicate[]) || []);
+    setTopLevelWhen((spec.when as Predicate[]) || []);
   }, [watchData, watchLoaded, watchError]);
 
   // sync form to yaml
@@ -235,15 +183,10 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
     selectedNamespace,
     targetRef,
     specMode,
+    limits,
     strategy,
-    namedPatterns,
-    topLevelWhen,
     sectionWhen,
-    authentication,
-    metadata,
-    authorization,
-    response,
-    callbacks,
+    topLevelWhen,
   ]);
 
   const handleYAMLChange = (input: string) => {
@@ -263,56 +206,53 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
         });
       }
 
-      const loadSpecProper = (source: Record<string, unknown>) => {
-        setNamedPatterns((source.patterns as Record<string, { allOf: PatternExpression[] }>) || {});
-        const rules = (source.rules as AuthSchemeSpec) || {};
-        setAuthentication(rules.authentication || {});
-        setMetadata(rules.metadata || {});
-        setAuthorization(rules.authorization || {});
-        setResponse(rules.response || {});
-        setCallbacks(rules.callbacks || {});
-      };
-
       if (spec?.defaults) {
         setSpecMode('defaults');
         const d = spec.defaults as DefaultsOrOverrides;
+        setLimits(d.limits || {});
         setStrategy(d.strategy || 'atomic');
         setSectionWhen(d.when || []);
-        loadSpecProper(d as unknown as Record<string, unknown>);
       } else if (spec?.overrides) {
         setSpecMode('overrides');
         const o = spec.overrides as DefaultsOrOverrides;
+        setLimits(o.limits || {});
         setStrategy(o.strategy || 'atomic');
         setSectionWhen(o.when || []);
-        loadSpecProper(o as unknown as Record<string, unknown>);
       } else {
-        setSpecMode('rules');
-        loadSpecProper(spec || {});
+        setSpecMode('limits');
+        setLimits((spec?.limits as Record<string, LimitConfig>) || {});
       }
 
-      setTopLevelWhen((spec?.when as WhenPredicate[]) || []);
+      setTopLevelWhen((spec?.when as Predicate[]) || []);
     } catch (e) {
       console.error('error parsing yaml:', e);
     }
   };
 
   const policy = createPolicy();
-
-  const isFormValid = !!(policyName && targetRef.name);
+  const hasAtLeastOneRate = Object.values(limits).some(
+    (l) => l.rates && l.rates.length > 0 && l.rates.some((r) => r.limit > 0 && r.window),
+  );
+  const isFormValid = !!(
+    policyName &&
+    targetRef.name &&
+    Object.keys(limits).length > 0 &&
+    hasAtLeastOneRate
+  );
 
   return (
     <>
       <Helmet>
         <title data-test="example-page-title">
-          {create ? t('Create AuthPolicy') : t('Edit AuthPolicy')}
+          {create ? t(config.createTitle) : t(config.editTitle)}
         </title>
       </Helmet>
       <PageSection hasBodyWrapper={false}>
         <div className="co-m-nav-title">
-          <Title headingLevel="h1">{create ? t('Create AuthPolicy') : t('Edit AuthPolicy')}</Title>
-          <p className="help-block">
-            {t('AuthPolicy enables authentication and authorization for Gateway API resources')}
-          </p>
+          <Title headingLevel="h1">
+            {create ? t(config.createTitle) : t(config.editTitle)}
+          </Title>
+          <p className="help-block">{t(config.description)}</p>
         </div>
         <FormGroup
           className="kuadrant-editor-toggle"
@@ -353,7 +293,7 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
               />
               <FormHelperText>
                 <HelperText>
-                  <HelperTextItem>{t('Unique name of the AuthPolicy')}</HelperTextItem>
+                  <HelperTextItem>{t(config.nameHelperText)}</HelperTextItem>
                 </HelperText>
               </FormHelperText>
             </FormGroup>
@@ -367,30 +307,30 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
               className="kuadrant-rule-mode-section"
               role="radiogroup"
               fieldId="spec-mode"
-              label={t('Rule application mode')}
+              label={t('Limit application mode')}
               isRequired
             >
               <FormHelperText>
                 <HelperText>
                   <HelperTextItem>
                     {t(
-                      'How rules are applied when multiple policies target overlapping resources.',
+                      'How limits are applied when multiple policies target overlapping resources.',
                     )}
                   </HelperTextItem>
                 </HelperText>
               </FormHelperText>
               <Radio
-                label={t('Rules')}
-                description={t('Apply rules directly to the target')}
-                isChecked={specMode === 'rules'}
-                onChange={() => setSpecMode('rules')}
-                id="spec-mode-rules"
+                label={t('Limits')}
+                description={t('Apply limits directly to the target')}
+                isChecked={specMode === 'limits'}
+                onChange={() => setSpecMode('limits')}
+                id="spec-mode-limits"
                 name="spec-mode"
               />
               <Radio
                 label={t('Defaults')}
                 description={t(
-                  'Set default rules that can be overridden by more specific policies',
+                  'Set default limits that can be overridden by more specific policies',
                 )}
                 isChecked={specMode === 'defaults'}
                 onChange={() => setSpecMode('defaults')}
@@ -399,28 +339,30 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
               />
               <Radio
                 label={t('Overrides')}
-                description={t('Enforce rules that cannot be overridden by more specific policies')}
+                description={t(
+                  'Enforce limits that cannot be overridden by more specific policies',
+                )}
                 isChecked={specMode === 'overrides'}
                 onChange={() => setSpecMode('overrides')}
                 id="spec-mode-overrides"
                 name="spec-mode"
               />
             </FormGroup>
-            {specMode !== 'rules' && (
+            {specMode !== 'limits' && (
               <>
                 <FormGroup role="radiogroup" fieldId="strategy" label={t('Merge strategy')}>
                   <FormHelperText>
                     <HelperText>
                       <HelperTextItem>
                         {t(
-                          'How these rules interact with rules from other policies targeting the same resource.',
+                          'How these limits interact with limits from other policies targeting the same resource.',
                         )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>
                   <Radio
                     label={t('Atomic')}
-                    description={t('Replace all rules from less specific policies')}
+                    description={t('Replace all limits from less specific policies')}
                     isChecked={strategy === 'atomic'}
                     onChange={() => setStrategy('atomic')}
                     id="strategy-atomic"
@@ -428,7 +370,7 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
                   />
                   <Radio
                     label={t('Merge')}
-                    description={t('Combine with rules from less specific policies')}
+                    description={t('Combine with limits from less specific policies')}
                     isChecked={strategy === 'merge'}
                     onChange={() => setStrategy('merge')}
                     id="strategy-merge"
@@ -436,7 +378,7 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
                   />
                 </FormGroup>
                 <ExpandableSection toggleText={t('Conditions for this policy mode')}>
-                  <WhenConditionsField
+                  <WhenField
                     label={t('Conditions')}
                     predicates={sectionWhen}
                     onChange={setSectionWhen}
@@ -444,38 +386,19 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
                 </ExpandableSection>
               </>
             )}
-            <div>
-              <ExpandableSection toggleText={t('Named patterns')}>
-                <NamedPatternsSection patterns={namedPatterns} onChange={setNamedPatterns} />
-              </ExpandableSection>
-              <ExpandableSection toggleText={t('Authentication')}>
-                <AuthenticationSection authentication={authentication} onChange={setAuthentication} />
-              </ExpandableSection>
-              <ExpandableSection toggleText={t('Metadata')}>
-                <MetadataSection metadata={metadata} onChange={setMetadata} />
-              </ExpandableSection>
-              <ExpandableSection toggleText={t('Authorization')}>
-                <AuthorizationSection authorization={authorization} onChange={setAuthorization} />
-              </ExpandableSection>
-              <ExpandableSection toggleText={t('Response')}>
-                <ResponseSection response={response} onChange={setResponse} />
-              </ExpandableSection>
-              <ExpandableSection toggleText={t('Callbacks')}>
-                <CallbacksSection callbacks={callbacks} onChange={setCallbacks} />
-              </ExpandableSection>
-              <ExpandableSection toggleText={t('Global conditions')}>
-                <WhenConditionsField
-                  label={t('Global conditions')}
-                  predicates={topLevelWhen}
-                  onChange={setTopLevelWhen}
-                />
-              </ExpandableSection>
-            </div>
+            <LimitsSection limits={limits} onChange={setLimits} tokenMode={config.tokenMode} />
+            <ExpandableSection toggleText={t('Global conditions')}>
+              <WhenField
+                label={t('Global conditions')}
+                predicates={topLevelWhen}
+                onChange={setTopLevelWhen}
+              />
+            </ExpandableSection>
             <ActionGroup className="pf-v6-u-mt-0">
               <KuadrantCreateUpdate
                 model={policyModel}
                 resource={policy}
-                policyType="auth"
+                policyType={config.policyType}
                 history={history}
                 validation={isFormValid}
               />
@@ -501,4 +424,4 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
   );
 };
 
-export default KuadrantAuthPolicyCreatePage;
+export default RateLimitPolicyForm;

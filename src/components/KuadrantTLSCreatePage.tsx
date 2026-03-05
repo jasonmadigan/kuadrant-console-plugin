@@ -321,7 +321,7 @@ const KuadrantTLSCreatePage: React.FC = () => {
             ) : (
               <IssuerSelect selectedIssuer={selectedIssuer} onChange={setSelectedIssuers} />
             )}
-            <ActionGroup className="pf-u-mt-0">
+            <ActionGroup className="pf-v6-u-mt-0">
               <KuadrantCreateUpdate
                 model={tlsPolicyModel}
                 resource={tlsPolicy}

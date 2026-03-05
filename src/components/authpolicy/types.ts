@@ -1,9 +1,4 @@
-export interface TargetRef {
-  group: string;
-  kind: 'HTTPRoute' | 'Gateway';
-  name: string;
-  sectionName?: string;
-}
+export { TargetRef } from '../shared/types';
 
 export type PatternOperator = 'eq' | 'neq' | 'incl' | 'excl' | 'matches';
 

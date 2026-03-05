@@ -383,13 +383,13 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
             </ExpandableSection>
             <ExpandableSection
               toggleText={t('Health Check')}
-              className="pf-u-mt-0"
+              className="pf-v6-u-mt-0"
               isExpanded={healthExpanded}
               onToggle={() => setHealthExpanded(!healthExpanded)}
             >
               <HealthCheckField healthCheck={healthCheck} onChange={setHealthCheck} />
             </ExpandableSection>
-            <ActionGroup className="pf-u-mt-0">
+            <ActionGroup className="pf-v6-u-mt-0">
               <KuadrantCreateUpdate
                 model={dnsPolicyModel}
                 resource={dnsPolicy}

@@ -1,9 +1,5 @@
-export interface TargetRef {
-  group: string;
-  kind: 'HTTPRoute' | 'Gateway';
-  name: string;
-  sectionName?: string;
-}
+// re-export from shared for backwards compat
+export { TargetRef } from '../shared/types';
 
 export interface Rate {
   limit: number;

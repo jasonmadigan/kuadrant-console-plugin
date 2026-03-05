@@ -290,7 +290,7 @@ const KuadrantTelemetryPolicyCreatePage: React.FC = () => {
                 {t('Add label')}
               </Button>
             </FormGroup>
-            <ActionGroup className="pf-u-mt-0">
+            <ActionGroup className="pf-v6-u-mt-0">
               <KuadrantCreateUpdate
                 model={policyModel}
                 resource={policy}

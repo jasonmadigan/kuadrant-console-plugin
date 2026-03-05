@@ -27,8 +27,8 @@ import {
 } from '@openshift-console/dynamic-plugin-sdk';
 import { useHistory, useLocation } from 'react-router-dom';
 import yaml from 'js-yaml';
-import { TargetRef } from './ratelimitpolicy/types';
-import TargetRefField from './ratelimitpolicy/TargetRefField';
+import { TargetRef } from './shared/types';
+import TargetRefField from './shared/TargetRefField';
 import KuadrantCreateUpdate from './KuadrantCreateUpdate';
 import { handleCancel } from '../utils/cancel';
 import { resourceGVKMapping } from '../utils/resources';
@@ -598,7 +598,7 @@ const KuadrantOIDCPolicyCreatePage: React.FC = () => {
               )}
             </ExpandableSection>
 
-            <ActionGroup className="pf-u-mt-0">
+            <ActionGroup className="pf-v6-u-mt-0">
               <KuadrantCreateUpdate
                 model={policyModel}
                 resource={policy}
