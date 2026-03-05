@@ -44,9 +44,12 @@ const KuadrantTelemetryPolicyCreatePage: React.FC = () => {
   const [selectedNamespace] = useActiveNamespace();
   const [createView, setCreateView] = React.useState<'form' | 'yaml'>('form');
   const [policyName, setPolicyName] = React.useState('');
-  const [selectedGateway, setSelectedGateway] = React.useState<Gateway>({
-    name: '',
-    namespace: '',
+  const [selectedGateway, setSelectedGateway] = React.useState<Gateway>(() => {
+    const ns = window.location.pathname.split('/')[3] || '';
+    return {
+      name: new URLSearchParams(window.location.search).get('targetName') || '',
+      namespace: ns !== '#ALL_NS#' ? ns : '',
+    };
   });
   const [metricsLabels, setMetricsLabels] = React.useState<MetricsLabel[]>([
     { key: '', value: '' },

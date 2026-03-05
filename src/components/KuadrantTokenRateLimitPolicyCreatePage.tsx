@@ -43,10 +43,13 @@ const KuadrantTokenRateLimitPolicyCreatePage: React.FC = () => {
   const [selectedNamespace] = useActiveNamespace();
   const [createView, setCreateView] = React.useState<'form' | 'yaml'>('form');
   const [policyName, setPolicyName] = React.useState('');
-  const [targetRef, setTargetRef] = React.useState<TargetRef>({
-    group: 'gateway.networking.k8s.io',
-    kind: 'Gateway',
-    name: '',
+  const [targetRef, setTargetRef] = React.useState<TargetRef>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      group: 'gateway.networking.k8s.io',
+      kind: (params.get('targetKind') as 'Gateway' | 'HTTPRoute') || 'Gateway',
+      name: params.get('targetName') || '',
+    };
   });
   const [specMode, setSpecMode] = React.useState<SpecMode>('limits');
   const [limits, setLimits] = React.useState<Record<string, LimitConfig>>({});

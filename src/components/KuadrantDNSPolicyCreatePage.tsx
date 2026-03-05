@@ -40,9 +40,12 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   const [createView, setCreateView] = React.useState<'form' | 'yaml'>('form');
   const [policyName, setPolicyName] = React.useState('');
   const [selectedNamespace] = useActiveNamespace();
-  const [selectedGateway, setSelectedGateway] = React.useState<Gateway>({
-    name: '',
-    namespace: '',
+  const [selectedGateway, setSelectedGateway] = React.useState<Gateway>(() => {
+    const ns = window.location.pathname.split('/')[3] || '';
+    return {
+      name: new URLSearchParams(window.location.search).get('targetName') || '',
+      namespace: ns !== '#ALL_NS#' ? ns : '',
+    };
   });
   const [loadBalancing, setLoadBalancing] = React.useState<LoadBalancing>({
     geo: '',
