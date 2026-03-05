@@ -212,7 +212,6 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
               : false, // Default to false if not present
         });
 
-        console.log('Initializing dns with existing dns for update');
       }
     } else if (dnsError) {
       console.error('Failed to fetch the resource:', dnsError);

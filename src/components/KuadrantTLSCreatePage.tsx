@@ -156,7 +156,6 @@ const KuadrantTLSCreatePage: React.FC = () => {
           });
         }
 
-        console.log('Initializing tls with existing TLS for update');
       }
     } else if (tlsError) {
       console.error('Failed to fetch the resource:', tlsError);

@@ -39,14 +39,16 @@ const KuadrantCreateUpdate: React.FC<GenericPolicyForm> = ({
           model: model,
           data: resource,
         });
-        console.log(`${policyType} updated successfully:`, response);
-        history.push(`/kuadrant/all-namespaces/policies/${policyType}`);
-      } else {
-        const response = await k8sCreate({
+        await k8sUpdate({
           model: model,
           data: resource,
         });
-        console.log(`${policyType} created successfully:`, response);
+        history.push(`/kuadrant/all-namespaces/policies/${policyType}`);
+      } else {
+        await k8sCreate({
+          model: model,
+          data: resource,
+        });
         history.push(`/kuadrant/all-namespaces/policies/${policyType}`);
       }
     } catch (error) {
