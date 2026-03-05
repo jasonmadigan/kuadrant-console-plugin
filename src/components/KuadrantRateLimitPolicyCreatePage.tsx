@@ -293,6 +293,7 @@ const KuadrantRateLimitPolicyCreatePage: React.FC = () => {
               namespace={namespaceEdit || selectedNamespace}
             />
             <FormGroup
+              className="kuadrant-rule-mode-section"
               role="radiogroup"
               fieldId="spec-mode"
               label={t('Limit application mode')}
@@ -301,7 +302,9 @@ const KuadrantRateLimitPolicyCreatePage: React.FC = () => {
               <FormHelperText>
                 <HelperText>
                   <HelperTextItem>
-                    {t('How limits are applied when multiple policies target overlapping resources.')}
+                    {t(
+                      'How limits are applied when multiple policies target overlapping resources.',
+                    )}
                   </HelperTextItem>
                 </HelperText>
               </FormHelperText>
@@ -315,7 +318,9 @@ const KuadrantRateLimitPolicyCreatePage: React.FC = () => {
               />
               <Radio
                 label={t('Defaults')}
-                description={t('Set default limits that can be overridden by more specific policies')}
+                description={t(
+                  'Set default limits that can be overridden by more specific policies',
+                )}
                 isChecked={specMode === 'defaults'}
                 onChange={() => setSpecMode('defaults')}
                 id="spec-mode-defaults"
@@ -323,7 +328,9 @@ const KuadrantRateLimitPolicyCreatePage: React.FC = () => {
               />
               <Radio
                 label={t('Overrides')}
-                description={t('Enforce limits that cannot be overridden by more specific policies')}
+                description={t(
+                  'Enforce limits that cannot be overridden by more specific policies',
+                )}
                 isChecked={specMode === 'overrides'}
                 onChange={() => setSpecMode('overrides')}
                 id="spec-mode-overrides"
@@ -332,15 +339,13 @@ const KuadrantRateLimitPolicyCreatePage: React.FC = () => {
             </FormGroup>
             {specMode !== 'limits' && (
               <>
-                <FormGroup
-                  role="radiogroup"
-                  fieldId="strategy"
-                  label={t('Merge strategy')}
-                >
+                <FormGroup role="radiogroup" fieldId="strategy" label={t('Merge strategy')}>
                   <FormHelperText>
                     <HelperText>
                       <HelperTextItem>
-                        {t('How these limits interact with limits from other policies targeting the same resource.')}
+                        {t(
+                          'How these limits interact with limits from other policies targeting the same resource.',
+                        )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

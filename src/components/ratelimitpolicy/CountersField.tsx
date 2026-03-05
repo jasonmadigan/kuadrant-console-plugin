@@ -53,7 +53,9 @@ const CountersField: React.FC<CountersFieldProps> = ({ counters, onChange }) => 
       <FormHelperText>
         <HelperText>
           <HelperTextItem>
-            {t('Counters partition the rate limit by unique values of a CEL expression, e.g. each user gets their own limit.')}
+            {t(
+              'Counters partition the rate limit by unique values of a CEL expression, e.g. each user gets their own limit.',
+            )}
           </HelperTextItem>
         </HelperText>
       </FormHelperText>

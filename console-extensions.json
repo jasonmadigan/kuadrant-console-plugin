@@ -158,6 +158,14 @@
     }
   },
   {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/k8s/ns/:ns/authpolicy/name/:name/edit",
+      "component": { "$codeRef": "KuadrantAuthPolicyCreatePage" }
+    }
+  },
+  {
     "type": "console.resource/create",
     "properties": {
       "model": {
@@ -210,6 +218,17 @@
         "kind": "TokenRateLimitPolicy"
       },
       "provider": { "$codeRef": "useTokenRateLimitPolicyActions" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "kuadrant.io",
+        "version": "v1",
+        "kind": "AuthPolicy"
+      },
+      "provider": { "$codeRef": "useAuthPolicyActions" }
     }
   },
   {

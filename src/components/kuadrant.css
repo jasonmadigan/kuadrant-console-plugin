@@ -275,6 +275,14 @@
   margin-bottom: 0.5rem;
 }
 
+.kuadrant-rule-mode-section {
+  margin-bottom: 1rem;
+}
+
+.kuadrant-rule-mode-section .pf-v6-c-radio {
+  margin-bottom: 0.5rem;
+}
+
 /* fix virtualized table cell alignment for kuadrant tables */
 .kuadrant-resource-list .ReactVirtualized__Table__rowColumn,
 .kuadrant-policy-list .ReactVirtualized__Table__rowColumn,

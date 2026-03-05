@@ -96,7 +96,8 @@
       "useDNSPolicyActions": "./components/dnspolicy/useDNSPolicyActions",
       "useTLSPolicyActions": "./components/tlspolicy/useTLSPolicyActions",
       "useRateLimitPolicyActions": "./components/ratelimitpolicy/useRateLimitPolicyActions",
-      "useTokenRateLimitPolicyActions": "./components/ratelimitpolicy/useTokenRateLimitPolicyActions"
+      "useTokenRateLimitPolicyActions": "./components/ratelimitpolicy/useTokenRateLimitPolicyActions",
+      "useAuthPolicyActions": "./components/authpolicy/useAuthPolicyActions"
     },
     "dependencies": {
       "@console/pluginAPI": "*"
