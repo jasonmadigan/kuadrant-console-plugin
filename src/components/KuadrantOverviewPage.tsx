@@ -665,7 +665,7 @@ const KuadrantOverviewPage: React.FC = () => {
     return (
       <>
         <Helmet>
-          <title data-test="example-page-title">{t('Kuadrant')}</title>
+          <title data-test="overview-page-title">{t('Kuadrant')}</title>
         </Helmet>
         <PageSection className="kuadrant-overview-page">
           <Title headingLevel="h1" className="pf-u-mb-lg">

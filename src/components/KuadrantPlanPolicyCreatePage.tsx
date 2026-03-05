@@ -201,7 +201,7 @@ const KuadrantPlanPolicyCreatePage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">
+        <title data-test="planpolicy-page-title">
           {create ? t('Create Plan Policy') : t('Edit Plan Policy')}
         </title>
       </Helmet>

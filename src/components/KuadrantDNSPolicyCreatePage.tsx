@@ -287,7 +287,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">
+        <title data-test="dnspolicy-page-title">
           {create ? t('Create DNS Policy') : t('Edit DNS Policy')}
         </title>
       </Helmet>

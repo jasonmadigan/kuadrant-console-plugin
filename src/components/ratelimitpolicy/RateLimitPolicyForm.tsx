@@ -243,7 +243,7 @@ const RateLimitPolicyForm: React.FC<{ config: RateLimitFormConfig }> = ({ config
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">
+        <title data-test="rlp-page-title">
           {create ? t(config.createTitle) : t(config.editTitle)}
         </title>
       </Helmet>

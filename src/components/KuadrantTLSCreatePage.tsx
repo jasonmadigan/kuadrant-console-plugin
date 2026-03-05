@@ -223,7 +223,7 @@ const KuadrantTLSCreatePage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">
+        <title data-test="tlspolicy-page-title">
           {create ? t('Create TLS Policy') : t('Edit TLS Policy')}
         </title>
       </Helmet>

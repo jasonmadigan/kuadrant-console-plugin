@@ -187,7 +187,7 @@ const KuadrantTelemetryPolicyCreatePage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">
+        <title data-test="telemetrypolicy-page-title">
           {create ? t('Create Telemetry Policy') : t('Edit Telemetry Policy')}
         </title>
       </Helmet>

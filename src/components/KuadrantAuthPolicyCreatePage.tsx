@@ -303,7 +303,7 @@ const KuadrantAuthPolicyCreatePage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">
+        <title data-test="authpolicy-page-title">
           {create ? t('Create AuthPolicy') : t('Edit AuthPolicy')}
         </title>
       </Helmet>

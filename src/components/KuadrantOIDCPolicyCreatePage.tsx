@@ -322,7 +322,7 @@ const KuadrantOIDCPolicyCreatePage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">
+        <title data-test="oidcpolicy-page-title">
           {create ? t('Create OIDC Policy') : t('Edit OIDC Policy')}
         </title>
       </Helmet>

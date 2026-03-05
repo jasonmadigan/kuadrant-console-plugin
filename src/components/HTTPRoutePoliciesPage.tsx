@@ -36,7 +36,7 @@ const HTTPRoutePoliciesPage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title data-test="example-page-title">{t('Kuadrant Policies')}</title>
+        <title data-test="httproute-policies-page-title">{t('Kuadrant Policies')}</title>
       </Helmet>
       <PageSection hasBodyWrapper={false}>
         <Title headingLevel="h2">{t('Kuadrant Policies')}</Title>
