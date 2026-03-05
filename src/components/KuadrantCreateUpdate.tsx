@@ -35,10 +35,6 @@ const KuadrantCreateUpdate: React.FC<GenericPolicyForm> = ({
 
     try {
       if (update) {
-        const response = await k8sUpdate({
-          model: model,
-          data: resource,
-        });
         await k8sUpdate({
           model: model,
           data: resource,
@@ -62,7 +58,7 @@ const KuadrantCreateUpdate: React.FC<GenericPolicyForm> = ({
   };
   return (
     <>
-      {errorAlertMsg != '' && (
+      {errorAlertMsg !== '' && (
         <AlertGroup className="kuadrant-alert-group">
           <Alert title={t(`Error creating ${policyType}`)} variant={AlertVariant.danger} isInline>
             {errorAlertMsg}
