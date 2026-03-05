@@ -30,7 +30,7 @@ const LoadBalancingField: React.FC<LoadBalancingProps> = ({
         label={t('Load balancing Weight')}
         isRequired
         fieldId="weight"
-        className="pf-u-mb-md"
+        className="pf-v6-u-mb-md"
       >
         <TextInput
           id="weight"
@@ -54,7 +54,7 @@ const LoadBalancingField: React.FC<LoadBalancingProps> = ({
           </HelperText>
         </FormHelperText>
       </FormGroup>
-      <FormGroup label={t('Load balancing Geo')} isRequired fieldId="geo" className="pf-u-mb-md">
+      <FormGroup label={t('Load balancing Geo')} isRequired fieldId="geo" className="pf-v6-u-mb-md">
         <TextInput
           id="geo"
           value={loadBalancing.geo}
@@ -80,10 +80,10 @@ const LoadBalancingField: React.FC<LoadBalancingProps> = ({
         fieldId="default-geo"
         label={t('Default Geo')}
         isRequired
-        className="pf-u-mb-md"
+        className="pf-v6-u-mb-md"
         aria-labelledby="issuer-label"
       >
-        <div className="pf-u-display-flex pf-u-align-items-center">
+        <div className="pf-v6-u-display-flex pf-v6-u-align-items-center">
           <Radio
             label={t('Enabled')}
             isChecked={loadBalancing.defaultGeo === true}
@@ -95,7 +95,7 @@ const LoadBalancingField: React.FC<LoadBalancingProps> = ({
             }
             id="default-geo-enabled"
             name="default-geo"
-            className="pf-u-mr-md"
+            className="pf-v6-u-mr-md"
             isDisabled={formDisabled}
           />
           <Radio

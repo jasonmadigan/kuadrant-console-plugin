@@ -668,7 +668,7 @@ const KuadrantOverviewPage: React.FC = () => {
           <title data-test="overview-page-title">{t('Kuadrant')}</title>
         </Helmet>
         <PageSection className="kuadrant-overview-page">
-          <Title headingLevel="h1" className="pf-u-mb-lg">
+          <Title headingLevel="h1" className="pf-v6-u-mb-lg">
             {t('Kuadrant')} Overview
           </Title>
           <Grid hasGutter>
@@ -703,7 +703,7 @@ const KuadrantOverviewPage: React.FC = () => {
                               'Learn how to create, import and use Kuadrant policies on OpenShift with step-by-step instructions and tasks.',
                             )}
                           </Content>
-                          <Stack hasGutter className="pf-u-mt-sm">
+                          <Stack hasGutter className="pf-v6-u-mt-sm">
                             <StackItem>
                               <Content
                                 component="a"
@@ -740,7 +740,7 @@ const KuadrantOverviewPage: React.FC = () => {
                               'Read about the latest information and key features in the Kuadrant highlights.',
                             )}
                           </Content>
-                          <Stack hasGutter className="pf-u-mt-md">
+                          <Stack hasGutter className="pf-v6-u-mt-md">
                             <StackItem>
                               <Content
                                 target="_blank"
@@ -761,7 +761,7 @@ const KuadrantOverviewPage: React.FC = () => {
                           <Content component={ContentVariants.small}>
                             {t('Additional operators and tools to support Kuadrant.')}
                           </Content>
-                          <Stack hasGutter className="pf-u-mt-md">
+                          <Stack hasGutter className="pf-v6-u-mt-md">
                             <StackItem>
                               <Content
                                 component="a"
@@ -795,7 +795,7 @@ const KuadrantOverviewPage: React.FC = () => {
                 {/* TODO: Loading placeholder */}
                 <CardTitle>
                   <Title headingLevel="h2">{t('Gateways')}</Title>
-                  <CardBody className="pf-u-p-10">
+                  <CardBody className="pf-v6-u-p-10">
                     <Flex
                       justifyContent={{ default: 'justifyContentSpaceAround' }}
                       alignItems={{ default: 'alignItemsCenter' }}
@@ -884,7 +884,7 @@ const KuadrantOverviewPage: React.FC = () => {
                       </Tooltip>
                     )}
                   </CardTitle>
-                  <CardBody className="pf-u-p-10">
+                  <CardBody className="pf-v6-u-p-10">
                     <ResourceList
                       resources={[resourceGVKMapping['Gateway']]}
                       columns={gatewayTrafficColumns}
@@ -898,7 +898,7 @@ const KuadrantOverviewPage: React.FC = () => {
             ) : (
               <GridItem>
                 <Card>
-                  <CardBody className="pf-u-p-10">
+                  <CardBody className="pf-v6-u-p-10">
                     <CardTitle>
                       <Title headingLevel="h2">{t('Gateways')}</Title>
                     </CardTitle>
@@ -926,7 +926,7 @@ const KuadrantOverviewPage: React.FC = () => {
             {policyRBACNill ? (
               <GridItem lg={6}>
                 <Card>
-                  <CardBody className="pf-u-p-10">
+                  <CardBody className="pf-v6-u-p-10">
                     <CardTitle>
                       <Title headingLevel="h2">{t('Policies')}</Title>
                     </CardTitle>
@@ -991,7 +991,7 @@ const KuadrantOverviewPage: React.FC = () => {
                       </DropdownList>
                     </Dropdown>
                   </CardTitle>
-                  <CardBody className="pf-u-p-10">
+                  <CardBody className="pf-v6-u-p-10">
                     <ResourceList
                       resources={[
                         resourceGVKMapping['AuthPolicy'],
@@ -1031,7 +1031,7 @@ const KuadrantOverviewPage: React.FC = () => {
                       </Tooltip>
                     )}
                   </CardTitle>
-                  <CardBody className="pf-u-p-10">
+                  <CardBody className="pf-v6-u-p-10">
                     <ResourceList
                       resources={[resourceGVKMapping['HTTPRoute']]}
                       columns={columns}
@@ -1044,7 +1044,7 @@ const KuadrantOverviewPage: React.FC = () => {
             ) : (
               <GridItem lg={6}>
                 <Card>
-                  <CardBody className="pf-u-p-10">
+                  <CardBody className="pf-v6-u-p-10">
                     <CardTitle>
                       <Title headingLevel="h2">{t('HTTPRoutes')}</Title>
                     </CardTitle>

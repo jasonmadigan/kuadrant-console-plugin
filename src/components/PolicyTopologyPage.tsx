@@ -165,7 +165,7 @@ const PolicyTopologyPage: React.FC = () => {
           <CardTitle>{t('Topology View')}</CardTitle>
           <CardBody>
             <Content>
-              <Content component="p" className="pf-u-mb-md">
+              <Content component="p" className="pf-v6-u-mb-md">
                 {t(
                   'This view visualizes the relationships and interactions between different resources within your cluster related to Kuadrant, allowing you to explore connections between Gateways, HTTPRoutes and Kuadrant Policies.',
                 )}

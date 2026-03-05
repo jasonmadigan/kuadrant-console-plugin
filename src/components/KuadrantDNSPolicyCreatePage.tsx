@@ -370,7 +370,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
             </FormGroup>
             <ExpandableSection
               toggleText={t('LoadBalancing')}
-              className="pf-u-mb-0"
+              className="pf-v6-u-mb-0"
               isExpanded={loadBalancingExpanded}
               onToggle={() => setLoadBalancingExpanded(!loadBalancingExpanded)}
             >

@@ -18,7 +18,7 @@ const HealthCheckField: React.FC<HealthCheckProps> = ({ healthCheck, onChange })
         label={t('Endpoint')}
         isRequired
         fieldId="health-check-endpoint"
-        className="pf-u-mb-md"
+        className="pf-v6-u-mb-md"
       >
         <TextInput
           id="health-check-endpoint"
@@ -32,7 +32,7 @@ const HealthCheckField: React.FC<HealthCheckProps> = ({ healthCheck, onChange })
         label={t('Failure Threshold')}
         isRequired
         fieldId="health-check-failure-threshold"
-        className="pf-u-mb-md"
+        className="pf-v6-u-mb-md"
       >
         <TextInput
           id="health-check-failure-threshold"
@@ -46,7 +46,7 @@ const HealthCheckField: React.FC<HealthCheckProps> = ({ healthCheck, onChange })
           placeholder="0"
         />
       </FormGroup>
-      <FormGroup label={t('Port')} isRequired fieldId="health-check-port" className="pf-u-mb-md">
+      <FormGroup label={t('Port')} isRequired fieldId="health-check-port" className="pf-v6-u-mb-md">
         <TextInput
           id="health-check-port"
           type="number"
@@ -63,7 +63,7 @@ const HealthCheckField: React.FC<HealthCheckProps> = ({ healthCheck, onChange })
         label={t('Protocol')}
         isRequired
         fieldId="health-check-protocol"
-        className="pf-u-mb-md"
+        className="pf-v6-u-mb-md"
       >
         <FormSelect
           id="health-check-protocol"

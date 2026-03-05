@@ -179,7 +179,7 @@ export const AllPoliciesListPage: React.FC<{
             />
           </div>
 
-          <div className="kuadrant-resource-create-button pf-u-mt-md">
+          <div className="kuadrant-resource-create-button pf-v6-u-mt-md">
             <Dropdown
               isOpen={isOpen}
               onSelect={onMenuSelect}
@@ -225,7 +225,7 @@ const PoliciesListPage: React.FC<{
       <ListPageBody>
         <div className="co-m-nav-title--row kuadrant-resource-create-container">
           <ResourceList resources={[resource.gvk]} namespace={activeNamespace} />
-          <div className="kuadrant-resource-create-button pf-u-mt-md">
+          <div className="kuadrant-resource-create-button pf-v6-u-mt-md">
             {resourceRBAC[resource.gvk.kind]?.create ? (
               <ListPageCreateLink
                 to={`/k8s/ns/${resolvedNamespace}/${resource.gvk.group}~${resource.gvk.version}~${resource.gvk.kind}/~new`}
@@ -235,7 +235,7 @@ const PoliciesListPage: React.FC<{
             ) : (
               <Tooltip content={t('You do not have permission to create a {{kind}}', { kind: resource.gvk.kind })}>
                 <span
-                  className="pf-c-button pf-m-primary pf-u-mt-md pf-u-mr-md"
+                  className="pf-v6-c-button pf-m-primary pf-v6-u-mt-md pf-v6-u-mr-md"
                   aria-disabled="true"
                 >
                   {t('Create {{kind}}', { kind: resource.gvk.kind })}
