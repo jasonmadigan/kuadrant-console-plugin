@@ -375,7 +375,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
               <LoadBalancingField
                 loadBalancing={loadBalancing}
                 onChange={setLoadBalancing}
-                formDisabled={formDisabled}
+                formDisabled={false}
               />
             </ExpandableSection>
             <ExpandableSection
