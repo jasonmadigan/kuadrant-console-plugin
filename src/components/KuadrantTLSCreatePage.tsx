@@ -230,7 +230,7 @@ const KuadrantTLSCreatePage: React.FC = () => {
       </Helmet>
       <PageSection hasBodyWrapper={false}>
         <div className="co-m-nav-title">
-          <Title headingLevel="h1">{create ? 'Create TLS Policy' : 'Edit TLS Policy'}</Title>
+          <Title headingLevel="h1">{create ? t('Create TLS Policy') : t('Edit TLS Policy')}</Title>
           <p className="help-block">
             {t(
               'Targets Gateway API networking resources Gateways to provide TLS for gateway listeners by managing the lifecycle of TLS certificates using cert-manager',
