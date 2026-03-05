@@ -53,7 +53,7 @@ const KuadrantCreateUpdate: React.FC<GenericPolicyForm> = ({
       } else {
         console.error(`Cannot create ${policyType}`, error);
       }
-      setErrorAlertMsg(error.message);
+      setErrorAlertMsg(error instanceof Error ? error.message : String(error));
     }
   };
   return (
