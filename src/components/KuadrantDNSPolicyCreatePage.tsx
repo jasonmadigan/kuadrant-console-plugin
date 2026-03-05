@@ -265,13 +265,17 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   const handleCancelResource = () => {
     handleCancel(history);
   };
+  const hasAnyLB =
+    loadBalancing.geo || loadBalancing.defaultGeo !== undefined || loadBalancing.weight;
+  const hasAnyHealth =
+    healthCheck.endpoint || healthCheck.failureThreshold || healthCheck.port || healthCheck.protocol;
   const isFormValid = !!(
     policyName &&
     selectedGateway.name &&
     providerRefs.length > 0 &&
-    (!loadBalancingExpanded ||
+    (!hasAnyLB ||
       (loadBalancing.geo && loadBalancing.weight && loadBalancing.defaultGeo !== undefined)) &&
-    (!healthExpanded ||
+    (!hasAnyHealth ||
       (healthCheck.endpoint &&
         healthCheck.failureThreshold > 0 &&
         healthCheck.port > 0 &&
