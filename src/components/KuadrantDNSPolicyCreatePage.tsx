@@ -227,8 +227,8 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
       });
       setHealthCheck({
         endpoint: parsedYaml.spec?.healthCheck?.endpoint || '',
-        failureThreshold: parsedYaml.spec?.healthCheck?.failureThreshold,
-        port: parsedYaml.spec?.healthCheck?.port || '',
+        failureThreshold: parsedYaml.spec?.healthCheck?.failureThreshold || null,
+        port: parsedYaml.spec?.healthCheck?.port || null,
         protocol: parsedYaml.spec?.healthCheck?.protocol || '',
       });
       const providerRef =
@@ -240,7 +240,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
 
       setLoadBalancing({
         geo: parsedYaml.spec?.loadBalancing?.geo || '',
-        weight: parsedYaml.spec?.loadBalancing?.weight || '',
+        weight: parsedYaml.spec?.loadBalancing?.weight || null,
         defaultGeo:
           parsedYaml.spec?.loadBalancing?.defaultGeo !== undefined
             ? parsedYaml.spec.loadBalancing?.defaultGeo
