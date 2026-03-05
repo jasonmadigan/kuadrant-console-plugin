@@ -17,6 +17,7 @@ import {
 
 import { k8sDelete, K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 import { useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { RESOURCES, ResourceKind } from '../utils/resources';
 import useAccessReviews from '../utils/resourceRBAC';
 import { getModelFromResource, getResourceNameFromKind } from '../utils/getModelFromResource';
@@ -25,6 +26,7 @@ type DropdownWithKebabProps = {
 };
 
 const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
+  const { t } = useTranslation('plugin__kuadrant-console-plugin');
   const [isOpen, setIsOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const history = useHistory();
@@ -115,32 +117,32 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
         <DropdownList>
           {!rbacLoading && resourceRBAC[obj.kind]['edit'] === true ? (
             <DropdownItem value="edit" key="edit" onClick={onEditClick}>
-              Edit
+              {t('Edit')}
             </DropdownItem>
           ) : (
-            <Tooltip content={`You do not have permission to edit the ${obj.kind}`}>
+            <Tooltip content={t('You do not have permission to edit the {{kind}}', { kind: obj.kind })}>
               <DropdownItem
                 value="edit"
                 key="edit"
                 onClick={onEditClick}
                 isAriaDisabled={!resourceRBAC[obj.kind]['edit']}
               >
-                Edit
+                {t('Edit')}
               </DropdownItem>
             </Tooltip>
           )}
           {!rbacLoading && resourceRBAC[obj.kind]['delete'] === true ? (
             <DropdownItem value="delete" key="delete">
-              Delete
+              {t('Delete')}
             </DropdownItem>
           ) : (
-            <Tooltip content={`You do not have permission to delete the ${obj.kind}`}>
+            <Tooltip content={t('You do not have permission to delete the {{kind}}', { kind: obj.kind })}>
               <DropdownItem
                 value="delete"
                 key="delete"
                 isAriaDisabled={!resourceRBAC[obj.kind]['delete']}
               >
-                Delete
+                {t('Delete')}
               </DropdownItem>
             </Tooltip>
           )}
@@ -153,20 +155,20 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
         aria-describedby="delete-modal-body"
         variant="medium"
       >
-        <ModalHeader title="Confirm Delete" />
+        <ModalHeader title={t('Confirm Delete')} />
         <ModalBody>
-          Are you sure you want to delete the resource <b>{obj.metadata.name}</b>?
+          {t('Are you sure you want to delete the resource')} <b>{obj.metadata.name}</b>?
         </ModalBody>
         <ModalFooter>
           <Button key="confirm" variant={ButtonVariant.danger} onClick={onDeleteConfirm}>
-            Delete
+            {t('Delete')}
           </Button>
           <Button
             key="cancel"
             variant={ButtonVariant.link}
             onClick={() => setIsDeleteModalOpen(false)}
           >
-            Cancel
+            {t('Cancel')}
           </Button>
         </ModalFooter>
       </Modal>

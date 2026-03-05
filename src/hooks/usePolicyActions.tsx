@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ExtensionHookResult } from '@openshift-console/dynamic-plugin-sdk/lib/api/common-types';
 import { Action } from '@openshift-console/dynamic-plugin-sdk/lib/extensions/actions';
 import {
@@ -20,6 +21,7 @@ const usePolicyActions = (
   editPathPrefix: string,
   editLabel: string,
 ): ExtensionHookResult<Action[]> => {
+  const { t } = useTranslation('plugin__kuadrant-console-plugin');
   const history = useHistory();
   const gvk = obj ? getGroupVersionKindForResource(obj) : undefined;
   const [policyModel] = useK8sModel(
@@ -60,20 +62,20 @@ const usePolicyActions = (
     return [
       {
         id: `edit-labels-${idPrefix}`,
-        label: 'Edit labels',
+        label: t('Edit labels'),
         cta: launchLabelsModal,
         accessReview: updateAccess,
       },
       {
         id: `edit-annotations-${idPrefix}`,
-        label: 'Edit annotations',
+        label: t('Edit annotations'),
         cta: launchAnnotationsModal,
         accessReview: updateAccess,
       },
       {
         id: `kuadrant-${idPrefix}-edit-form`,
         label: editLabel,
-        description: 'Edit via form',
+        description: t('Edit via form'),
         cta: () =>
           history.push({
             pathname: `/k8s/ns/${namespace}/${editPathPrefix}/name/${name}/edit`,
@@ -83,7 +85,7 @@ const usePolicyActions = (
       },
       {
         id: `delete-${idPrefix}`,
-        label: 'Delete',
+        label: t('Delete'),
         cta: launchDeleteModal,
         accessReview: deleteAccess,
       },
