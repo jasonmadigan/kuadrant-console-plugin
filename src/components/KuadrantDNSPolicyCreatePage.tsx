@@ -219,7 +219,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
 
   const handleYAMLChange = (yamlInput: string) => {
     try {
-      const parsedYaml = yaml.load(yamlInput);
+      const parsedYaml = yaml.load(yamlInput, { schema: yaml.JSON_SCHEMA });
       setPolicyName(parsedYaml.metadata?.name || '');
       setSelectedGateway({
         name: parsedYaml.spec?.targetRef?.name || '',

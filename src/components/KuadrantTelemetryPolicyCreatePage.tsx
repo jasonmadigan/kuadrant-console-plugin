@@ -143,7 +143,7 @@ const KuadrantTelemetryPolicyCreatePage: React.FC = () => {
 
   const handleYAMLChange = (input: string) => {
     try {
-      const parsed = yaml.load(input) as Record<string, unknown>;
+      const parsed = yaml.load(input, { schema: yaml.JSON_SCHEMA }) as Record<string, unknown>;
       const meta = parsed.metadata as Record<string, string>;
       const spec = parsed.spec as Record<string, unknown>;
       setPolicyName(meta?.name || '');
