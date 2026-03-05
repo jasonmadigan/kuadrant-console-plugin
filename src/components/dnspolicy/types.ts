@@ -1,7 +1,7 @@
 export interface LoadBalancing {
   geo: string;
   weight: number;
-  defaultGeo: boolean | '';
+  defaultGeo?: boolean;
 }
 
 export interface HealthCheck {

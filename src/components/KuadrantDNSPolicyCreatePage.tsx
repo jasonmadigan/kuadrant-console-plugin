@@ -50,7 +50,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
   const [loadBalancing, setLoadBalancing] = React.useState<LoadBalancing>({
     geo: '',
     weight: null,
-    defaultGeo: '',
+    defaultGeo: undefined,
   });
   const [healthCheck, setHealthCheck] = React.useState<HealthCheck>({
     endpoint: '',
@@ -77,10 +77,10 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
       healthCheck.endpoint ||
       healthCheck.failureThreshold ||
       healthCheck.port ||
-      healthCheck.protocol != '';
+      healthCheck.protocol !== '';
 
     const hasLoadBalancing =
-      loadBalancing.geo || loadBalancing.defaultGeo != '' || loadBalancing.weight;
+      loadBalancing.geo || loadBalancing.defaultGeo !== undefined || loadBalancing.weight;
 
     return {
       apiVersion:
@@ -104,7 +104,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
               loadBalancing: {
                 ...(loadBalancing?.weight ? { weight: loadBalancing.weight } : {}),
                 ...(loadBalancing?.geo ? { geo: loadBalancing.geo } : {}),
-                ...(loadBalancing.defaultGeo !== ''
+                ...(loadBalancing.defaultGeo !== undefined
                   ? { defaultGeo: loadBalancing.defaultGeo }
                   : {}),
               },
@@ -273,7 +273,7 @@ const KuadrantDNSPolicyCreatePage: React.FC = () => {
       selectedGateway.name &&
       providerRefs.length > 0 &&
       (!loadBalancingExpanded ||
-        (loadBalancing.geo && loadBalancing.weight && loadBalancing.defaultGeo !== '')) &&
+        (loadBalancing.geo && loadBalancing.weight && loadBalancing.defaultGeo !== undefined)) &&
       (!healthExpanded ||
         (healthCheck.endpoint &&
           healthCheck.failureThreshold > 0 &&
