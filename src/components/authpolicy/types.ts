@@ -1,4 +1,5 @@
-export { TargetRef } from '../shared/types';
+import { TargetRef } from '../shared/types';
+export { TargetRef };
 
 export type PatternOperator = 'eq' | 'neq' | 'incl' | 'excl' | 'matches';
 

@@ -1,5 +1,5 @@
-// re-export from shared for backwards compat
-export { TargetRef } from '../shared/types';
+import { TargetRef } from '../shared/types';
+export { TargetRef };
 
 export interface Rate {
   limit: number;
