@@ -116,6 +116,15 @@ export const RESOURCES = {
   },
 
   // extensions.kuadrant.io policies
+  TelemetryPolicy: {
+    gvk: { group: 'extensions.kuadrant.io', version: 'v1alpha1', kind: 'TelemetryPolicy' },
+    plural: 'TelemetryPolicies',
+    isPolicy: true,
+    isGatewayAPI: false,
+    showInTopologyByDefault: true,
+    isKuadrantInternal: false,
+    createPath: 'KuadrantTelemetryPolicyCreatePage',
+  },
   OIDCPolicy: {
     gvk: { group: 'extensions.kuadrant.io', version: 'v1alpha1', kind: 'OIDCPolicy' },
     plural: 'OIDCPolicies',
@@ -242,6 +251,7 @@ export const RESOURCE_POLICY_MAP: Partial<Record<ResourceKind, ResourceKind[]>> 
     'TokenRateLimitPolicy',
     'OIDCPolicy',
     'PlanPolicy',
+    'TelemetryPolicy',
   ],
   HTTPRoute: ['AuthPolicy', 'RateLimitPolicy', 'TokenRateLimitPolicy', 'OIDCPolicy', 'PlanPolicy'],
 };

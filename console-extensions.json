@@ -166,6 +166,30 @@
     }
   },
   {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/k8s/ns/:ns/telemetrypolicy/name/:name/edit",
+      "component": { "$codeRef": "KuadrantTelemetryPolicyCreatePage" }
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/k8s/ns/:ns/oidcpolicy/name/:name/edit",
+      "component": { "$codeRef": "KuadrantOIDCPolicyCreatePage" }
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/k8s/ns/:ns/planpolicy/name/:name/edit",
+      "component": { "$codeRef": "KuadrantPlanPolicyCreatePage" }
+    }
+  },
+  {
     "type": "console.resource/create",
     "properties": {
       "model": {
@@ -174,6 +198,17 @@
         "kind": "AuthPolicy"
       },
       "component": { "$codeRef": "KuadrantAuthPolicyCreatePage" }
+    }
+  },
+  {
+    "type": "console.resource/create",
+    "properties": {
+      "model": {
+        "group": "extensions.kuadrant.io",
+        "version": "v1alpha1",
+        "kind": "TelemetryPolicy"
+      },
+      "component": { "$codeRef": "KuadrantTelemetryPolicyCreatePage" }
     }
   },
   {
@@ -229,6 +264,39 @@
         "kind": "AuthPolicy"
       },
       "provider": { "$codeRef": "useAuthPolicyActions" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "extensions.kuadrant.io",
+        "version": "v1alpha1",
+        "kind": "TelemetryPolicy"
+      },
+      "provider": { "$codeRef": "useTelemetryPolicyActions" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "extensions.kuadrant.io",
+        "version": "v1alpha1",
+        "kind": "OIDCPolicy"
+      },
+      "provider": { "$codeRef": "useOIDCPolicyActions" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "extensions.kuadrant.io",
+        "version": "v1alpha1",
+        "kind": "PlanPolicy"
+      },
+      "provider": { "$codeRef": "usePlanPolicyActions" }
     }
   },
   {

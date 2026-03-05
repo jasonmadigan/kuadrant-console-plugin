@@ -255,7 +255,8 @@
 }
 
 /* pf6 sets max-width: 100px on number inputs, truncating placeholders */
-.kuadrant-field-row input {
+.kuadrant-field-row input,
+.kuadrant-limit-entry input {
   width: 100%;
   max-width: 100%;
 }

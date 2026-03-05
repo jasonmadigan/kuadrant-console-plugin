@@ -445,7 +445,7 @@ const KuadrantPoliciesPage: React.FC = () => {
     <>
       <NamespaceBar onNamespaceChange={handleNamespaceChange} />
       <Title headingLevel="h1" className="kuadrant-page-title">
-        {t('Kuadrant')}
+        {t('Policies')}
       </Title>
       {policyRBACNil ? (
         <NoPermissionsView primaryMessage={t('You do not have permission to view Policies')} />

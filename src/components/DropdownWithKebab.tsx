@@ -66,12 +66,7 @@ const DropdownWithKebab: React.FC<DropdownWithKebabProps> = ({ obj }) => {
   };
 
   const onEditClick = () => {
-    if (
-      obj.kind === 'OIDCPolicy' ||
-      obj.kind === 'PlanPolicy' ||
-      obj.kind === 'Gateway' ||
-      obj.kind === 'HTTPRoute'
-    ) {
+    if (obj.kind === 'Gateway' || obj.kind === 'HTTPRoute') {
       history.push({
         pathname: `/k8s/ns/${obj.metadata.namespace}/${obj.apiVersion.replace('/', '~')}~${
           obj.kind

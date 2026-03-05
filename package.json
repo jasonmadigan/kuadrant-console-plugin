@@ -97,7 +97,11 @@
       "useTLSPolicyActions": "./components/tlspolicy/useTLSPolicyActions",
       "useRateLimitPolicyActions": "./components/ratelimitpolicy/useRateLimitPolicyActions",
       "useTokenRateLimitPolicyActions": "./components/ratelimitpolicy/useTokenRateLimitPolicyActions",
-      "useAuthPolicyActions": "./components/authpolicy/useAuthPolicyActions"
+      "useAuthPolicyActions": "./components/authpolicy/useAuthPolicyActions",
+      "KuadrantTelemetryPolicyCreatePage": "./components/KuadrantTelemetryPolicyCreatePage",
+      "useTelemetryPolicyActions": "./components/telemetrypolicy/useTelemetryPolicyActions",
+      "useOIDCPolicyActions": "./components/oidcpolicy/useOIDCPolicyActions",
+      "usePlanPolicyActions": "./components/planpolicy/usePlanPolicyActions"
     },
     "dependencies": {
       "@console/pluginAPI": "*"
