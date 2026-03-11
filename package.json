@@ -14,6 +14,7 @@
     "build-dev": "yarn clean && yarn webpack",
     "start": "yarn webpack serve --progress",
     "start-console": "./start-console.sh",
+    "start-console:minc": "./start-console-minc.sh",
     "minc": "./start-local.sh",
     "minc:teardown": "./e2e/teardown.sh",
     "i18n": "./i18n-scripts/build-i18n.sh && node ./i18n-scripts/set-english-defaults.js",

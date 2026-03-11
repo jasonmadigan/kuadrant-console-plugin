@@ -24,7 +24,6 @@ export async function impersonateUser(page: Page, username: string): Promise<voi
     state: 'visible',
     timeout: 10_000,
   });
-  await page.waitForLoadState('networkidle');
 }
 
 // stop impersonation if active
@@ -40,12 +39,12 @@ export async function stopImpersonation(page: Page): Promise<void> {
 
 // SPA navigation using pushState - preserves redux state (including impersonation)
 // page.goto() causes a full reload which destroys impersonation state
-async function spaNavigate(page: Page, path: string): Promise<void> {
+export async function spaNavigate(page: Page, path: string): Promise<void> {
   await page.evaluate((p) => {
     window.history.pushState({}, '', p);
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, path);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 export async function navigateToPolicies(page: Page): Promise<void> {
@@ -60,6 +59,36 @@ export async function navigateToTopology(page: Page): Promise<void> {
   await spaNavigate(page, '/kuadrant/policy-topology');
 }
 
+// navigate to a resource create page
+export async function navigateToCreate(
+  page: Page,
+  group: string,
+  version: string,
+  kind: string,
+  namespace = TEST_NAMESPACE,
+): Promise<void> {
+  await spaNavigate(page, `/k8s/ns/${namespace}/${group}~${version}~${kind}/~new`);
+}
+
+// navigate to a policy edit page
+export async function navigateToEdit(
+  page: Page,
+  policyType: string,
+  name: string,
+  namespace = TEST_NAMESPACE,
+): Promise<void> {
+  await spaNavigate(page, `/k8s/ns/${namespace}/${policyType}/name/${name}/edit`);
+}
+
+// navigate to policies page with a specific tab selected
+export async function navigateToPolicyTab(
+  page: Page,
+  tab: string,
+  namespace = TEST_NAMESPACE,
+): Promise<void> {
+  await spaNavigate(page, `/kuadrant/ns/${namespace}/policies/${tab}`);
+}
+
 // wait for RBAC permission checks to finish loading.
 // the loading indicator may appear and disappear very quickly, so we try to
 // catch it appearing first to avoid a false-green race condition.
@@ -71,6 +100,69 @@ export async function waitForPermissionsLoaded(page: Page): Promise<void> {
     // already gone or never appeared - either way, not loading
   }
   await expect(loading).toBeHidden({ timeout: 30_000 });
+}
+
+// wait for a FormSelect to have real options (beyond the placeholder)
+export async function waitForSelectOptions(
+  page: Page,
+  selectId: string,
+  timeout = 15_000,
+): Promise<void> {
+  await page.waitForFunction(
+    ({ id, min }) => {
+      const select = document.querySelector(`#${id}`) as HTMLSelectElement;
+      return select && select.options.length > min;
+    },
+    { id: selectId, min: 1 },
+    { timeout },
+  );
+}
+
+// open the kebab menu for a resource row matching the given name
+export async function openKebab(page: Page, resourceName: string): Promise<void> {
+  const row = page.locator(`tr:has-text("${resourceName}")`).first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+  const kebab = row.locator('[aria-label="kebab dropdown toggle"]');
+  await kebab.click();
+}
+
+// delete a resource via the kebab menu and confirm the modal
+export async function deleteViaKebab(page: Page, resourceName: string): Promise<void> {
+  await openKebab(page, resourceName);
+  const deleteItem = page.locator('[role="menuitem"]:has-text("Delete")');
+  await expect(deleteItem).toBeVisible();
+  await deleteItem.click();
+
+  // confirm delete modal
+  const confirmButton = page.locator('.pf-v6-c-modal-box button.pf-m-danger');
+  await expect(confirmButton).toBeVisible({ timeout: 5_000 });
+  await confirmButton.click();
+
+  // wait for modal to close
+  await confirmButton.waitFor({ state: 'hidden', timeout: 10_000 });
+}
+
+export function generateTestName(prefix: string): string {
+  const time = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 6);
+  return `${prefix}-${time}${rand}`;
+}
+
+// best-effort cleanup of test resources by name prefix via kubectl
+export async function cleanupTestResources(
+  resourceType: string,
+  ...names: string[]
+): Promise<void> {
+  const { execSync } = await import('child_process');
+  for (const name of names) {
+    try {
+      execSync(`kubectl delete ${resourceType} ${name} -n ${TEST_NAMESPACE} --ignore-not-found`, {
+        timeout: 10_000,
+      });
+    } catch {
+      // best-effort
+    }
+  }
 }
 
 export { TEST_NAMESPACE };
